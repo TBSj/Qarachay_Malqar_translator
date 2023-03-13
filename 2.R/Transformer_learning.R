@@ -145,10 +145,10 @@ num_heads <- 8 # Кол-во голов внимания (8)
 
 
 buffer_size <- nrow(x_train)
-learning_rate  <-  1e-2 # 1e-4
+learning_rate  <-  1e-3 # 1e-4
 epoches <- 5
 ep_stop <- 2
-batch_size <- 8 # 64
+batch_size <- 16 # 64
 regul <- regularizer_l1_l2(l1 = learning_rate, l2 = learning_rate)
 #    2.5. Preparing matrix tf         ####
 # Слой векторизации можно вызывать как с пакетными, так и с непакетными данными. Здесь мы применяем векторизацию перед пакетной обработкой данных
