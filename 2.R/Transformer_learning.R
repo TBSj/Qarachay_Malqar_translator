@@ -611,147 +611,153 @@ toModel <- function(string){
     str_replace_all('Нг|НГ', '  N')
   # str_replace_all('\\bчап', 'чаб')  # чаб бла
 }
-fromModel <- function(string, 
+fromModel <- function(string,
                       dialect = 'qrc' # 'hlm', 'mqr'
 ){
   if(dialect == 'qrc'){
-    string %>% 
-      str_replace_all('\\bтюйюл', 'тюл') %>% 
-      str_replace_all('\\bТюйюл', 'Тюл') %>% 
-      str_replace_all('\\bуку', 'гылын  qуш') %>% 
-      str_replace_all('\\bУку', 'Гылын  qуш') %>% 
+    string %>%
+      str_replace_all('\\bтюйюл', 'тюл') %>%
+      str_replace_all('\\bТюйюл', 'Тюл') %>%
+      str_replace_all('\\bуку', 'гылын  qуш') %>%
+      str_replace_all('\\bУку', 'Гылын  qуш') %>%
       str_replace_all('\\bхораз', 'гугурукку') %>%
       str_replace_all('\\bХораз', 'Гугурукку') %>%
-      str_replace_all('\\bюзмез', 'qум') %>% 
-      str_replace_all('\\bЮзмез', 'Qум') %>% 
-      str_replace_all('\\bjиля', 'jыла') %>% 
-      str_replace_all('\\bJиля', 'Jыла') %>% 
-      str_replace_all('\\bярабий|\\bарабий', 'арабин') %>% 
-      str_replace_all('\\bЯрабий|\\bАрабий', 'Арабин') %>% 
-      str_replace_all('нтта', 'нтда') %>% 
-      str_replace_all('ртте', 'ртде') %>% 
+      str_replace_all('\\bюзмез', 'qум') %>%
+      str_replace_all('\\bЮзмез', 'Qум') %>%
+      str_replace_all('\\bjиля', 'jыла') %>%
+      str_replace_all('\\bJиля', 'Jыла') %>%
+      str_replace_all('\\bярабий|\\bарабий', 'арабин') %>%
+      str_replace_all('\\bЯрабий|\\bАрабий', 'Арабин') %>%
+      str_replace_all('нтта', 'нтда') %>%
+      str_replace_all('ртте', 'ртде') %>%
       str_replace_all('\\bjамауат|\\bjамаwат', 'jамаgат') %>%
       str_replace_all('\\bJамауат|\\bJамаwат', 'Jамаgат') %>%
-      str_replace_all('\\bшуёх', 'шох') %>% 
-      str_replace_all('\\bШуёх', 'Шох') %>% 
-      str_replace_all('\\bшёндю', 'бусаgат') %>% 
-      str_replace_all('\\bШёндю', 'Бусаgат') %>% 
-      str_replace_all('\\bуgай', 'оgай') %>% 
-      str_replace_all('\\bУgай', 'Оgай') %>% 
-      # str_replace_all('\\bтерк', 'тез') %>% 
-      str_replace_all('\\bсаnа|\\bсеnе', 'сенnе') %>% 
-      str_replace_all('\\bСаnа|\\bСеnе', 'Сенnе') %>% 
-      str_replace_all('\\bмаnа|\\bмеnе', 'менnе') %>% 
-      str_replace_all('\\bМаnа|\\bМеnе', 'Менnе') %>% 
-      str_replace_all('\\bаяq jол', 'jахтана') %>% 
-      str_replace_all('\\bАяq jол', 'Jахтана') %>% 
-      str_replace_all('b', 'б') %>% 
-      str_replace_all('q', 'къ') %>% 
-      str_replace_all('Q', 'Къ') %>% 
-      str_replace_all('g', 'гъ') %>% 
-      str_replace_all('G', 'Гъ') %>% 
-      str_replace_all('j', 'дж') %>% 
-      str_replace_all('J', 'Дж') %>% 
-      str_replace_all('w', 'ў') %>% 
-      str_replace_all('W', 'Ў') %>% 
-      str_replace_all('n', 'нг') %>% 
+      str_replace_all('\\bшуёх', 'шох') %>%
+      str_replace_all('\\bШуёх', 'Шох') %>%
+      str_replace_all('\\bшёндю', 'бусаgат') %>%
+      str_replace_all('\\bШёндю', 'Бусаgат') %>%
+      str_replace_all('\\bуgай', 'оgай') %>%
+      str_replace_all('\\bУgай', 'Оgай') %>%
+      # str_replace_all('\\bтерк', 'тез') %>%
+      str_replace_all('\\bсаnа|\\bсеnе', 'сенnе') %>%
+      str_replace_all('\\bСаnа|\\bСеnе', 'Сенnе') %>%
+      str_replace_all('\\bмаnа|\\bмеnе', 'менnе') %>%
+      str_replace_all('\\bМаnа|\\bМеnе', 'Менnе') %>%
+      str_replace_all('\\bаяq jол', 'jахтана') %>%
+      str_replace_all('\\bАяq jол', 'Jахтана') %>%
+      str_replace_all('\\bсыbат', 'сыфат') %>%
+      str_replace_all('\\bСыbат', 'Сыфат') %>%
+      str_replace_all('b', 'б') %>%
+      str_replace_all('q', 'къ') %>%
+      str_replace_all('Q', 'Къ') %>%
+      str_replace_all('g', 'гъ') %>%
+      str_replace_all('G', 'Гъ') %>%
+      str_replace_all('j', 'дж') %>%
+      str_replace_all('J', 'Дж') %>%
+      str_replace_all('w', 'ў') %>%
+      str_replace_all('W', 'Ў') %>%
+      str_replace_all('n', 'нг') %>%
       str_replace_all('N', 'Нг')
   } else if(dialect == 'hlm'){
-    string %>% 
-      str_replace_all('\\bтюл', 'тюйюл') %>% 
-      str_replace_all('\\bТюл', 'Тюйюл') %>% 
-      str_replace_all('\\bгылын  qуш', 'уку') %>% 
-      str_replace_all('\\bГылын  qуш', 'Уку') %>% 
+    string %>%
+      str_replace_all('\\bтюл', 'тюйюл') %>%
+      str_replace_all('\\bТюл', 'Тюйюл') %>%
+      str_replace_all('\\bгылын  qуш', 'уку') %>%
+      str_replace_all('\\bГылын  qуш', 'Уку') %>%
       str_replace_all('\\bгугурукку', 'хораз') %>%
       str_replace_all('\\bГугурукку', 'Хораз') %>%
-      str_replace_all('\\bqум', 'юзмез') %>% 
-      str_replace_all('\\bQум', 'Юзмез') %>% 
-      str_replace_all('\\bjыла', 'jиля') %>% 
-      str_replace_all('\\bJыла', 'Jиля') %>% 
-      str_replace_all('\\bарабин|\\bарабий', 'ярабий') %>% 
-      str_replace_all('\\bАрабин|\\bАрабий', 'Ярабий') %>% 
-      str_replace_all('нтда', 'нтта') %>% 
-      str_replace_all('ртде', 'ртте') %>% 
+      str_replace_all('\\bqум', 'юзмез') %>%
+      str_replace_all('\\bQум', 'Юзмез') %>%
+      str_replace_all('\\bjыла', 'jиля') %>%
+      str_replace_all('\\bJыла', 'Jиля') %>%
+      str_replace_all('\\bарабин|\\bарабий', 'ярабий') %>%
+      str_replace_all('\\bАрабин|\\bАрабий', 'Ярабий') %>%
+      str_replace_all('нтда', 'нтта') %>%
+      str_replace_all('ртде', 'ртте') %>%
       str_replace_all('\\bjамаgат', 'jамаwат') %>%
       str_replace_all('\\bJамаgат', 'Jамаwат') %>%
-      str_replace_all('\\bшох', 'шуёх') %>% 
-      str_replace_all('\\bШох', 'Шуёх') %>% 
-      str_replace_all('\\bбусаgат', 'шёндю') %>% 
-      str_replace_all('\\bБусаgат', 'Шёндю') %>% 
-      str_replace_all('\\bоgай', 'уgай') %>% 
-      str_replace_all('\\bОgай', 'Уgай') %>% 
-      str_replace_all('\\bтез', 'терк') %>% 
-      str_replace_all('\\bсенnе|\\bсеnе', 'саnа') %>% 
-      str_replace_all('\\bСенnе|\\bСеnе', 'Саnа') %>% 
-      str_replace_all('\\bменnе|\\bмеnе', 'маnа') %>% 
-      str_replace_all('\\bМенnе|\\bМеnе', 'Маnа') %>% 
-      str_replace_all('\\bjахтана', 'аяq jол') %>% 
-      str_replace_all('\\bJахтана', 'аяq jол') %>% 
-      str_replace_all('\\bхо\\b', 'хаw') %>% 
-      str_replace_all('\\bХо\\b', 'Хаw') %>% 
-      str_replace_all('b', 'п') %>% 
-      str_replace_all('q', 'къ') %>% 
-      str_replace_all('Q', 'Къ') %>% 
-      str_replace_all('g', 'гъ') %>% 
-      str_replace_all('G', 'Гъ') %>% 
-      str_replace_all('j', 'ж') %>% 
-      str_replace_all('J', 'Ж') %>% 
-      str_replace_all('w', 'ў') %>% 
-      str_replace_all('W', 'Ў') %>% 
-      str_replace_all('n', 'нг') %>% 
+      str_replace_all('\\bшох', 'шуёх') %>%
+      str_replace_all('\\bШох', 'Шуёх') %>%
+      str_replace_all('\\bбусаgат', 'шёндю') %>%
+      str_replace_all('\\bБусаgат', 'Шёндю') %>%
+      str_replace_all('\\bоgай', 'уgай') %>%
+      str_replace_all('\\bОgай', 'Уgай') %>%
+      str_replace_all('\\bтез', 'терк') %>%
+      str_replace_all('\\bсенnе|\\bсеnе', 'саnа') %>%
+      str_replace_all('\\bСенnе|\\bСеnе', 'Саnа') %>%
+      str_replace_all('\\bменnе|\\bмеnе', 'маnа') %>%
+      str_replace_all('\\bМенnе|\\bМеnе', 'Маnа') %>%
+      str_replace_all('\\bjахтана', 'аяq jол') %>%
+      str_replace_all('\\bJахтана', 'аяq jол') %>%
+      str_replace_all('\\bхо\\b', 'хаw') %>%
+      str_replace_all('\\bХо\\b', 'Хаw') %>%
+      str_replace_all('\\bсыbат', 'сыфат') %>%
+      str_replace_all('\\bСыbат', 'Сыфат') %>%
+      str_replace_all('b', 'п') %>%
+      str_replace_all('q', 'къ') %>%
+      str_replace_all('Q', 'Къ') %>%
+      str_replace_all('g', 'гъ') %>%
+      str_replace_all('G', 'Гъ') %>%
+      str_replace_all('j', 'ж') %>%
+      str_replace_all('J', 'Ж') %>%
+      str_replace_all('w', 'ў') %>%
+      str_replace_all('W', 'Ў') %>%
+      str_replace_all('n', 'нг') %>%
       str_replace_all('N', 'Нг')
-    
+
   } else if(dialect == 'mqr'){
-    string %>% 
-      str_replace_all('\\bтюл', 'тюйюл') %>% 
-      str_replace_all('\\bТюл', 'Тюйюл') %>% 
-      str_replace_all('\\bгылын  qуш', 'уку') %>% 
-      str_replace_all('\\bГылын  qуш', 'Уку') %>% 
+    string %>%
+      str_replace_all('\\bтюл', 'тюйюл') %>%
+      str_replace_all('\\bТюл', 'Тюйюл') %>%
+      str_replace_all('\\bгылын  qуш', 'уку') %>%
+      str_replace_all('\\bГылын  qуш', 'Уку') %>%
       str_replace_all('\\bгугурукку', 'хораз') %>%
       str_replace_all('\\bГугурукку', 'Хораз') %>%
-      str_replace_all('\\bqум', 'юзмез') %>% 
-      str_replace_all('\\bQум', 'Юзмез') %>% 
-      str_replace_all('\\bjыла', 'jиля') %>% 
-      str_replace_all('\\bJыла', 'Jиля') %>% 
-      str_replace_all('\\bарабин|\\bарабий', 'ярабий') %>% 
-      str_replace_all('\\bАрабин|\\bАрабий', 'Ярабий') %>% 
-      str_replace_all('нтда', 'нтта') %>% 
-      str_replace_all('ртде', 'ртте') %>% 
+      str_replace_all('\\bqум', 'юзмез') %>%
+      str_replace_all('\\bQум', 'Юзмез') %>%
+      str_replace_all('\\bjыла', 'jиля') %>%
+      str_replace_all('\\bJыла', 'Jиля') %>%
+      str_replace_all('\\bарабин|\\bарабий', 'ярабий') %>%
+      str_replace_all('\\bАрабин|\\bАрабий', 'Ярабий') %>%
+      str_replace_all('нтда', 'нтта') %>%
+      str_replace_all('ртде', 'ртте') %>%
       str_replace_all('\\bjамаgат', 'jамаwат') %>%
       str_replace_all('\\bJамаgат', 'Jамаwат') %>%
-      str_replace_all('\\bшох', 'шуёх') %>% 
-      str_replace_all('\\bШох', 'Шуёх') %>% 
-      str_replace_all('\\bбусаgат', 'шёндю') %>% 
-      str_replace_all('\\bБусаgат', 'Шёндю') %>% 
-      str_replace_all('\\bоgай', 'уgай') %>% 
-      str_replace_all('\\bОgай', 'Уgай') %>% 
-      str_replace_all('\\bтез', 'терк') %>% 
-      str_replace_all('\\bсенnе|\\bсеnе', 'саnа') %>% 
-      str_replace_all('\\bСенnе|\\bСеnе', 'Саnа') %>% 
-      str_replace_all('\\bменnе|\\bмеnе', 'маnа') %>% 
-      str_replace_all('\\bМенnе|\\bМеnе', 'Маnа') %>% 
-      str_replace_all('\\bjахтана', 'аяq jол') %>% 
-      str_replace_all('\\bJахтана', 'аяq jол') %>% 
-      str_replace_all('\\bхо\\b', 'хаw') %>% 
-      str_replace_all('\\bХо\\b', 'Хаw') %>% 
-      str_replace_all('b', 'п') %>% 
-      str_replace_all('q', 'къ') %>% 
-      str_replace_all('Q', 'Къ') %>% 
-      str_replace_all('g', 'гъ') %>% 
-      str_replace_all('G', 'Гъ') %>% 
-      str_replace_all('j', 'з') %>% 
-      str_replace_all('J', 'З') %>% 
-      str_replace_all('w', 'ў') %>% 
-      str_replace_all('W', 'Ў') %>% 
-      str_replace_all('n', 'нг') %>% 
-      str_replace_all('N', 'Нг') %>% 
-      str_replace_all('ч', 'ц') %>% 
-      str_replace_all('Ч', 'Ц') %>% 
-      str_replace_all('п', 'ф') %>% 
-      str_replace_all('П', 'Ф') %>% 
+      str_replace_all('\\bшох', 'шуёх') %>%
+      str_replace_all('\\bШох', 'Шуёх') %>%
+      str_replace_all('\\bбусаgат', 'шёндю') %>%
+      str_replace_all('\\bБусаgат', 'Шёндю') %>%
+      str_replace_all('\\bоgай', 'уgай') %>%
+      str_replace_all('\\bОgай', 'Уgай') %>%
+      str_replace_all('\\bтез', 'терк') %>%
+      str_replace_all('\\bсенnе|\\bсеnе', 'саnа') %>%
+      str_replace_all('\\bСенnе|\\bСеnе', 'Саnа') %>%
+      str_replace_all('\\bменnе|\\bмеnе', 'маnа') %>%
+      str_replace_all('\\bМенnе|\\bМеnе', 'Маnа') %>%
+      str_replace_all('\\bjахтана', 'аяq jол') %>%
+      str_replace_all('\\bJахтана', 'аяq jол') %>%
+      str_replace_all('\\bхо\\b', 'хаw') %>%
+      str_replace_all('\\bХо\\b', 'Хаw') %>%
+      str_replace_all('\\bсыbат', 'сыфат') %>%
+      str_replace_all('\\bСыbат', 'Сыфат') %>%
+      str_replace_all('b', 'п') %>%
+      str_replace_all('q', 'къ') %>%
+      str_replace_all('Q', 'Къ') %>%
+      str_replace_all('g', 'гъ') %>%
+      str_replace_all('G', 'Гъ') %>%
+      str_replace_all('j', 'з') %>%
+      str_replace_all('J', 'З') %>%
+      str_replace_all('w', 'ў') %>%
+      str_replace_all('W', 'Ў') %>%
+      str_replace_all('n', 'нг') %>%
+      str_replace_all('N', 'Нг') %>%
+      str_replace_all('ч', 'ц') %>%
+      str_replace_all('Ч', 'Ц') %>%
+      str_replace_all('п', 'ф') %>%
+      str_replace_all('П', 'Ф') %>%
       str_replace_all('къ\\b|гъ\\b', 'х')
   }
-  
+
 }
 # tf_function
 
