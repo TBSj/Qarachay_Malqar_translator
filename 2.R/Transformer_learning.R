@@ -473,7 +473,7 @@ decoder_outputs <- decoder_inputs %>%
 #   layer_dropout(dropout_rate) %>%
 #   layer_dense(trg_vocab_size, activation = "softmax") # Предсказываем слово для каждой выходной позиции
 
-#    3.6.3.  Transformer              ####
+#    3.6.3. Transformer               ####
 
 transformer <- keras_model(list(encoder_inputs, decoder_inputs),
                            decoder_outputs)
@@ -596,6 +596,8 @@ toModel <- function(string){
     str_replace_all('Ж', 'J') %>% 
     str_replace_all('ф', 'п') %>% 
     str_replace_all('Ф', 'П') %>% 
+    str_replace_all('\\bсыпат', 'сыфат') %>%
+    str_replace_all('\\bСыпат', 'Сыфат') %>%
     str_replace_all('(?<=[аыоуэеиёюя])у(?=[аыоуэеиёюя])|(?<=[аыоуэеиёюя])ў(?=[аыоуэеиёюя])|(?<=[АЫОУЭЕИЁЮЯ])у(?=[АЫОУЭЕИЁЮЯ])|(?<=[АЫОУЭЕИЁЮЯ])ў(?=[АЫОУЭЕИЁЮЯ])', 'w') %>% 
     str_replace_all('(?<=[аыоуэеиёюя])у|(?<=[аыоуэеиёюя])ў|(?<=[АЫОУЭЕИЁЮЯ])у|(?<=[АЫОУЭЕИЁЮЯ])ў', 'w') %>% 
     # str_replace_all('у(?=[аыоуэеиёюя])|ў(?=[аыоуэеиёюя])|у(?=[АЫОУЭЕИЁЮЯ])|ў(?=[АЫОУЭЕИЁЮЯ])', 'w') %>% 
