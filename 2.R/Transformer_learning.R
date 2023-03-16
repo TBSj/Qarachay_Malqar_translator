@@ -24,6 +24,10 @@ library(telegram.bot.dt)
 # token_dict = k_bert$load_vocabulary(vocab_path)
 # tokenizer = k_bert$Tokenizer(token_dict)
 
+# gpu_options = tf$compat$v1$GPUOptions(per_process_gpu_memory_fraction=0.98)
+# sess = tf$compat$v1$Session(config = tf$compat$v1$ConfigProto(gpu_options=gpu_options))
+# tf$test$is_gpu_available()
+# tf$device('/cpu:0')
 # PATH_TF_HUB <- 'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-4_H-256_A-4/2'
 
 # FILEPATH_SOURCE_PREPARED <- str_replace(this.dir(), strsplit(this.dir(), '/')[[1]] %>% last(), "Source_prepared")
