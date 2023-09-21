@@ -2,6 +2,7 @@
 import os
 import numpy as np
 import pandas as pd
+# import operator
 from tqdm.auto import tqdm, trange
 import json
 import random
@@ -18,6 +19,7 @@ LANG_UNICODE = 'krc_Cyrl'
 MODEL_PATH_RAW = "".join([MODEL_PATH, 'nllb_krc_raw'])
 SRC_LANG = "krc_Cyrl"
 TRG_LANG = "rus_Cyrl"
+SHARE_TEST_VAL = 0.25
 
 SRC_LANG_DF = SRC_LANG.removesuffix("_Cyrl")
 TRG_LANG_DF = TRG_LANG.removesuffix("_Cyrl")
@@ -41,12 +43,37 @@ all_pairs = list()
 for i in range(len(all_sentences)):
     all_pairs.append(all_sentences.iloc[i].tolist())
 
-all_pairs = all_pairs[:128]
+# all_pairs = pd.DataFrame(all_pairs[:128])
+all_pairs = (all_pairs[:128])
 
 
 SRC_LANG_DF_INDEX = all_sentences.columns.get_loc(SRC_LANG_DF)
 TRG_LANG_DF_INDEX = all_sentences.columns.get_loc(TRG_LANG_DF)
 
+
+#  Train-test-split
+which = lambda lst:list(np.where(lst)[0])
+
+num_test_samples = num_val_samples = round(SHARE_TEST_VAL * len(all_pairs))
+
+num_train_samples = len(all_pairs) - num_val_samples - num_test_samples
+vec_types = ["train"] * num_train_samples + ["test"] * num_test_samples +  ["val"] * num_val_samples
+
+random.seed(1)
+pair_group = random.sample(vec_types, len(vec_types))
+
+test_vec = which([(a == "test") for a in pair_group])
+train_vec = which([(a == "train") for a in pair_group])
+val_vec = which([(a == "val") for a in pair_group])
+
+
+
+
+
+# test_pairs = operator.itemgetter(*test_vec)(all_pairs)
+test_pairs = [all_pairs[i] for i in test_vec]
+train_pairs = [all_pairs[i] for i in train_vec]
+valid_pairs = [all_pairs[i] for i in val_vec]
 
 # Preparation tokenizer
 # Because language ids are added by hard-code on initialization, we need to manually fix them.
@@ -93,9 +120,9 @@ model.train()
 
 for epoch in range(epochs):
     print('EPOCH', epoch)
-    random.shuffle(all_pairs)
-    for i in trange(0, int(len(all_pairs) / batch_size)):
-        batch = all_pairs[i * batch_size: (i + 1) * batch_size]
+    random.shuffle(train_pairs)
+    for i in trange(0, int(len(train_pairs) / batch_size)):
+        batch = train_pairs[i * batch_size: (i + 1) * batch_size]
         # кодируем вопрос и ответ
         x = tokenizer([p[SRC_LANG_DF_INDEX] for p in batch], return_tensors='pt', padding=True, truncation=True, max_length=256).to(model.device)
         with tokenizer.as_target_tokenizer():
