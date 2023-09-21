@@ -20,6 +20,7 @@ from copy import deepcopy
 from heapdict import heapdict
 from tqdm.auto import tqdm, trange
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline, NllbTokenizer
+from transformers.models.nllb.tokenization_nllb import FAIRSEQ_LANGUAGE_CODES
 
 # Consts
 MODEL_NAME = "facebook/nllb-200-distilled-600M"
@@ -41,27 +42,27 @@ tokenizer = NllbTokenizer.from_pretrained(MODEL_NAME)
 # Languages checking
 
 # pd.Series([lang.split('_')[1] for lang in tokenizer.lang_code_to_id]).value_counts()
-pd.Series([lang.split('_')[1] for lang in tokenizer.lang_code_to_id])
-
-# 'crh_Latn': 256039 - Къырымтатар тил
-# 'tat_Cyrl': 256171 - Татар тил
-# 'kaz_Cyrl': 256089, - Къазакъ тил
-
-# Translate Fun 
-def translate(text, src_lang, tgt_lang, **kwargs):
-    tokenizer.src_lang = src_lang
-    tokenizer.tgt_lang = tgt_lang
-    inputs = tokenizer(text, return_tensors='pt')
-    result = model.generate(
-        **inputs.to(model.device), 
-        forced_bos_token_id=tokenizer.convert_tokens_to_ids(tgt_lang),
-        **kwargs
-    )
-    return tokenizer.decode(result[0], skip_special_tokens=True)
-  
-
-translate('Привет, как твои дела?', 'rus_Cyrl', 'spa_Latn')
-len(tokenizer.lang_code_to_id)
+# pd.Series([lang.split('_')[1] for lang in tokenizer.lang_code_to_id])
+# 
+# # 'crh_Latn': 256039 - Къырымтатар тил
+# # 'tat_Cyrl': 256171 - Татар тил
+# # 'kaz_Cyrl': 256089, - Къазакъ тил
+# 
+# # Translate Fun 
+# def translate(text, src_lang, tgt_lang, **kwargs):
+#     tokenizer.src_lang = src_lang
+#     tokenizer.tgt_lang = tgt_lang
+#     inputs = tokenizer(text, return_tensors='pt')
+#     result = model.generate(
+#         **inputs.to(model.device), 
+#         forced_bos_token_id=tokenizer.convert_tokens_to_ids(tgt_lang),
+#         **kwargs
+#     )
+#     return tokenizer.decode(result[0], skip_special_tokens=True)
+#   
+# 
+# translate('Привет, как твои дела?', 'rus_Cyrl', 'spa_Latn')
+# len(tokenizer.lang_code_to_id)
 
 
 # Counting words 
@@ -164,7 +165,7 @@ for w, c in pairs_count.items():
     hd[w] = -c
 
 steps = 100_000
-min_count = 30
+min_count = 50 # 30
 # default:   0 new tokens, 30 lenght, 0% new tokens
 # 100 mindf: 6.6k new tokens, 22 length, 47% new tokens (of sentence length)
 # 30 mindf:  20k new tokens, 20 length, 58% new tokens
@@ -240,8 +241,8 @@ extra_pairs[:10]
 extra_pairs[-20:]
 tokenizer.vocab_size
 # adding token
-new_special_tokens = tokenizer.additional_special_tokens + [LANG_UNICODE]
-tokenizer.add_special_tokens({'additional_special_tokens': new_special_tokens})
+# new_special_tokens = tokenizer.additional_special_tokens + [LANG_UNICODE]
+# tokenizer.add_special_tokens({'additional_special_tokens': new_special_tokens})
 
 tokenizer.save_pretrained(OLD_TOKENIZER_PATH)
 # !pip install transformers sentencepiece -q
@@ -295,8 +296,35 @@ new_tokenizer.vocab_size
 # new_tokenizer.added_tokens_decoder
 
 # Add Language token
-new_tokenizer.id_to_lang_code.update(new_tokenizer.added_tokens_decoder)
-new_tokenizer.lang_code_to_id.update(new_tokenizer.added_tokens_encoder)
+self = new_tokenizer
+self.lang_code_to_id = {
+    code: self.sp_model_size + i + self.fairseq_offset for i, code in enumerate(FAIRSEQ_LANGUAGE_CODES + [LANG_UNICODE])
+} # new_tokenizer.lang_code_to_id.update(new_tokenizer.added_tokens_encoder)
+
+self.id_to_lang_code = {v: k for k, v in self.lang_code_to_id.items()} # new_tokenizer.id_to_lang_code.update(new_tokenizer.added_tokens_decoder)
+self.fairseq_tokens_to_ids["<mask>"] = len(self.sp_model) + len(self.lang_code_to_id) + self.fairseq_offset
+
+self.fairseq_tokens_to_ids.update(self.lang_code_to_id)
+self.fairseq_ids_to_tokens = {v: k for k, v in self.fairseq_tokens_to_ids.items()}
+
+new_tokenizer.additional_special_tokens.append(LANG_UNICODE)
+# Былай боллукъду
+# new_special_tokens = new_tokenizer.additional_special_tokens + [LANG_UNICODE]
+# new_tokenizer.add_special_tokens({'additional_special_tokens': new_special_tokens})
+
+# old_vocab_size = len(tokenizer.sp_model) + 1
+# 
+# # Move added tokens to the end
+# for old_token_id in range(old_vocab_size, len(tokenizer)):
+#     old_token = tokenizer.convert_ids_to_tokens(old_token_id)
+#     new_token_id = new_tokenizer.convert_tokens_to_ids(old_token)
+#     # new_token = new_tokenizer.convert_ids_to_tokens(new_token_id-1)
+#     new_token = new_tokenizer.convert_ids_to_tokens(new_token_id)
+# 
+#     print(old_token_id, old_token, new_token_id, new_token)
+
+
+
 
 # Check
 text = random.choice(all_sentences_krc)
@@ -345,8 +373,9 @@ old_vocab_size = len(tokenizer.sp_model) + 1
 for old_token_id in range(old_vocab_size, len(tokenizer)):
     old_token = tokenizer.convert_ids_to_tokens(old_token_id)
     new_token_id = new_tokenizer.convert_tokens_to_ids(old_token)
+    new_token = new_tokenizer.convert_ids_to_tokens(new_token_id)
 
-    print(old_token_id, old_token, new_token_id)
+    print(old_token_id, old_token, new_token_id, new_token)
     # model.model.shared.weight.data[i + n_extra] = model.model.shared.weight.data[i]
     model.model.shared.weight.data[new_token_id] = model.model.shared.weight.data[old_token_id]
 
@@ -399,6 +428,7 @@ new_tokenizer.save_pretrained(MODEL_PATH_RAW)
 
 model1 = AutoModelForSeq2SeqLM.from_pretrained(MODEL_PATH_RAW) 
 tokenizer1 = NllbTokenizer.from_pretrained(MODEL_PATH_RAW)
+# tokenizer1 = NllbTokenizer.from_pretrained(MODEL_PATH_RAW, rebuild=True)
 
 model.model.shared
 model1.model.shared
