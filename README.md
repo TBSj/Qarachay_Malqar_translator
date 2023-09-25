@@ -13,7 +13,7 @@ Where to use:
 [HF](https://huggingface.co/spaces/TSjB/QM_RU_translator) and [site](https://tsjb-qm-ru-translator.hf.space/?)
 
 Authors telegram:
-[Bogdan](https://t.me/bogdan_tewnalany) and
+[Bogdan](https://t.me/bogdan_tewunalany) and
 [Ali](https://t.me/ali_berberov)
 
 # License
