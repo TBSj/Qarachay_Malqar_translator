@@ -14,7 +14,7 @@ Where to use:
 
 Authors telegram:
 [Bogdan](https://t.me/bogdan_tewunalany) and
-[Ali](https://t.me/ali_berberov)
+[Ali](https://t.me/ali_bulat1990)  
 
 # License
 Shield: [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
