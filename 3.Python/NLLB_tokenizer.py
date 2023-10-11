@@ -4,6 +4,7 @@
 # !pip install pandas
 # !pip install tqdm
 # !pip install transformers
+# !pip install sacremoses
 
 
 # !pip install --upgrade google-api-python-client
@@ -14,22 +15,32 @@ import random
 import re
 import pandas as pd
 import numpy as np
-import sentencepiece.sentencepiece_model_pb2 as model
+import sentencepiece.sentencepiece_model_pb2 as sp_pb2_model
 from collections import Counter, defaultdict
 from copy import deepcopy
 from heapdict import heapdict
 from tqdm.auto import tqdm, trange
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline, NllbTokenizer
 from transformers.models.nllb.tokenization_nllb import FAIRSEQ_LANGUAGE_CODES
+import sys
+import unicodedata
+from sacremoses import MosesPunctNormalizer
+import sentencepiece as spm
 
 # Consts
+DATA_PATH = "1.Data/"
 MODEL_NAME = "facebook/nllb-200-distilled-600M"
-ALL_SENTENCES_PATH = '1.Data/All_model.csv'
+ALL_SENTENCES_PATH = "".join([DATA_PATH, 'All_model.csv'])
 MODEL_PATH = "D:/Projects/Python/Models/NLLB_v1/"
 OLD_TOKENIZER_PATH = "".join([MODEL_PATH, 'old_tokenizer'])
 OLD_TOKENIZER_BPE_PATH = "".join([OLD_TOKENIZER_PATH, "/sentencepiece.bpe.model"])
 LANG_UNICODE = 'krc_Cyrl'
 MODEL_PATH_RAW = "".join([MODEL_PATH, 'nllb_krc_raw'])
+
+ALL_TEXT_PLAIN = "".join([DATA_PATH, 'myv_texts_plain.txt'])
+SPM_PREFIX = "".join([MODEL_PATH, 'SPM_QM/SPM_QM'])
+
+NEW_SPM_NAME = "".join([MODEL_PATH, 'SPM_QM/spm_nllb_qm.model'])
 
 # Model
 tokenizer = NllbTokenizer.from_pretrained(MODEL_NAME)
@@ -66,9 +77,13 @@ tokenizer = NllbTokenizer.from_pretrained(MODEL_NAME)
 
 
 # Counting words 
+PUNCT = '.,-—:)(»«!?–/;„"“…*́№Ёҥ[]”^%+І=і•_􏰀²|}{#‘■>⁠’á<°\§\''
+  
 all_sentences = pd.read_csv(ALL_SENTENCES_PATH, sep = ';')
-all_sentences_krc = np.array(all_sentences.krc)
+all_sentences_krc = np.array(all_sentences.krc.replace(PUNCT, ""))
+all_sentences["krc"][:10]
 all_sentences_krc[:10]
+
 
 all_pairs = list()
 for i in range(len(all_sentences)):
