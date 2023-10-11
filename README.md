@@ -13,8 +13,8 @@ Where to use:
 [HF](https://huggingface.co/spaces/TSjB/QM_RU_translator) and [site](https://tsjb-qm-ru-translator.hf.space/?)
 
 Authors telegram:
-[Bogdan](https://t.me/bogdan_tewnalany) and
-[Ali](https://t.me/ali_berberov)
+[Bogdan](https://t.me/bogdan_tewunalany) and
+[Ali](https://t.me/ali_bulat1990)  
 
 # License
 Shield: [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
