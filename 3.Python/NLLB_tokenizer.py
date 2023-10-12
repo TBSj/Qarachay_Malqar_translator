@@ -269,7 +269,7 @@ tokenizer.save_pretrained(OLD_TOKENIZER_PATH)
 
 
 #  Add new extraaxted tokens
-m = model.ModelProto()
+m = sp_pb2_model.ModelProto()
 m.ParseFromString(open(OLD_TOKENIZER_BPE_PATH, "rb").read())
 
 scores = [p.score for p in m.pieces]
@@ -281,7 +281,7 @@ type(m.pieces[37764-1].piece)
 
 
 for i, pair in enumerate(extra_vocab):
-    new_token = model.ModelProto().SentencePiece()
+    new_token = sp_pb2_model.ModelProto().SentencePiece()
     new_token.piece = ''.join(pair)
     #print(''.join(pair))
     #print(pair)
@@ -322,10 +322,10 @@ self.fairseq_tokens_to_ids["<mask>"] = len(self.sp_model) + len(self.lang_code_t
 self.fairseq_tokens_to_ids.update(self.lang_code_to_id)
 self.fairseq_ids_to_tokens = {v: k for k, v in self.fairseq_tokens_to_ids.items()}
 
-new_tokenizer.additional_special_tokens.append(LANG_UNICODE)
+# new_tokenizer.additional_special_tokens.append(LANG_UNICODE)
 # Былай боллукъду
-# new_special_tokens = new_tokenizer.additional_special_tokens + [LANG_UNICODE]
-# new_tokenizer.add_special_tokens({'additional_special_tokens': new_special_tokens})
+new_special_tokens = new_tokenizer.additional_special_tokens + [LANG_UNICODE]
+new_tokenizer.add_special_tokens({'additional_special_tokens': new_special_tokens})
 
 # old_vocab_size = len(tokenizer.sp_model) + 1
 # 

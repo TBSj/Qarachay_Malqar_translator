@@ -157,7 +157,7 @@ spm.SentencePieceTrainer.train(
     # num_threads=16,
     train_extremely_large_corpus=False,
     add_dummy_prefix=False,
-    max_sentencepiece_length=MAX_LENGTH,
+    max_sentencepiece_length=512,
     max_sentence_length=4192*4,
     pad_id=0,
     eos_id=1,
@@ -289,7 +289,6 @@ model.model.shared
 model.resize_token_embeddings(len(tokenizer))
 
 
-
 moved_tokens = list(tokenizer_old.lang_code_to_id) + ['<mask>']
 
 model.model.shared.weight.data[tokenizer.convert_tokens_to_ids(moved_tokens)] = model.model.shared.weight.data[tokenizer_old.convert_tokens_to_ids(moved_tokens)]
@@ -323,6 +322,8 @@ tokenizer.save_pretrained(MODEL_PATH_RAW)
 model1 = AutoModelForSeq2SeqLM.from_pretrained(MODEL_PATH_RAW) 
 tokenizer1 = NllbTokenizer.from_pretrained(MODEL_PATH_RAW)
 # tokenizer1 = NllbTokenizer.from_pretrained(MODEL_PATH_RAW, rebuild=True)
+fix_tokenizer(tokenizer1)
+
 
 model.model.shared
 model1.model.shared
@@ -354,8 +355,10 @@ tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
 # => "Le chef de l 'ONU affirme qu 'il n 'y a pas de solution militaire dans la Syrie."
 
 # translate from Qrachay-Malqar! 
-qm, ru = random.choice(all_pairs)
-qm, ru
+# qm, ru = random.choice(all_pairs)
+df = all_sentences.sample(1)[['krc', 'rus']]
+qm = df.krc.to_list()
+ru = df.rus.to_list()
 
 tokenizer.src_lang = LANG_UNICODE
 encoded_hi = tokenizer(qm, return_tensors="pt")
