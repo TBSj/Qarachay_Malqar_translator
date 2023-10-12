@@ -1,9 +1,10 @@
-# The first neural machine translation system for the Qarachay Malqar language on R
+# The first neural machine translation system for the Qarachay Malqar language
  
-Authors: Bogdan Tewnalany, Ali Berberov
+Authors: Bogdan Tewunalany, Ali Berberov
 
-Created transformer model on R and trained it on 27235 (v2 - 260602) parallel sentences between russian and Qarachay-Malqar languages. It is not enough for good prediction, result is bad. So, we used pre-trained model mbart-50 and fine-tuned it (TBSj/Qarachay_Malqar_translator_python).  
-Nowdays, we are collecting more sentences to improve our result.
+We collect 260602 parallel sentences between russian and Qarachay-Malqar languages. There were two ways to make the translator:  
+  *First, We made transformwer on Tensorflow/Keras on R. But fine-tuning of existing model is better.    
+  *Second, We used pre-trained model nllb-200 and fine-tuned it.  
 
 [Model for translation from russian to qarachay-malqar](https://huggingface.co/TSjB/mbart-large-52-ru-qm-v2)
 
