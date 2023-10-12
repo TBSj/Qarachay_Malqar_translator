@@ -3,8 +3,8 @@
 Authors: Bogdan Tewunalany, Ali Berberov
 
 We collect 260602 parallel sentences between russian and Qarachay-Malqar languages. There were two ways to make the translator:  
-  *First, We made transformwer on Tensorflow/Keras on R. But fine-tuning of existing model is better.    
-  *Second, We used pre-trained model nllb-200 and fine-tuned it.  
+  * First, We made transformwer on Tensorflow/Keras on R. But fine-tuning of existing model is better.    
+  * Second, We used pre-trained model nllb-200 and fine-tuned it.  
 
 [Model for translation from russian to qarachay-malqar](https://huggingface.co/TSjB/mbart-large-52-ru-qm-v2)
 
