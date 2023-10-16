@@ -2,7 +2,7 @@
  
 Authors: Bogdan Tewunalany, Ali Berberov
 
-We collect 260584 parallel sentences between russian and Qarachay-Malqar languages. There were two ways to make the translator:  
+We collect 265718 parallel sentences between russian and Qarachay-Malqar languages. There were two ways to make the translator:  
   * First, We made transformwer on Tensorflow/Keras on R. But fine-tuning of existing model is better.    
   * Second, We used pre-trained model nllb-200 and fine-tuned it.  
 
