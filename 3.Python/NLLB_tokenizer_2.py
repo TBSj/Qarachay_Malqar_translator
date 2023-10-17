@@ -17,11 +17,9 @@ import pandas as pd
 import numpy as np
 import sentencepiece.sentencepiece_model_pb2 as sp_pb2_model
 from collections import Counter, defaultdict
-# from copy import deepcopy
-# from heapdict import heapdict
 from tqdm.auto import tqdm, trange
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline, NllbTokenizer
-from transformers.models.nllb.tokenization_nllb import FAIRSEQ_LANGUAGE_CODES
+from transformers import AutoModelForSeq2SeqLM, NllbTokenizer
+# from transformers.models.nllb.tokenization_nllb import FAIRSEQ_LANGUAGE_CODES
 import sys
 import unicodedata
 from sacremoses import MosesPunctNormalizer
@@ -39,12 +37,12 @@ MODEL_PATH_RAW = "".join([MODEL_PATH, 'nllb_krc_raw'])
 
 ALL_TEXT_PLAIN = "".join([DATA_PATH, 'my_texts_plain.txt'])
 SPM_PREFIX = "".join([MODEL_PATH, 'SPM_QM/SPM_QM'])
-
 NEW_SPM_NAME = "".join([MODEL_PATH, 'SPM_QM/spm_nllb_qm.model'])
-MAX_LENGTH = 1024
 
-# 3.DOWNLOADING ------------------------------------------------
 PUNCT = '.,-—:)(»«!?–/;„"“…*́№Ёҥ[]”^%+І=і•_􏰀²|}{#‘■>⁠’á<°\§\''
+  
+# 3.DOWNLOADING ------------------------------------------------
+
   
 all_sentences = pd.read_csv(ALL_SENTENCES_PATH, sep = ';')
 all_sentences_krc = np.array(all_sentences.krc.replace(PUNCT, ""))
@@ -87,7 +85,6 @@ texts_with_unk = [
     if tokenizer.unk_token_id in tokenizer(text).input_ids
 ]
 print(len(texts_with_unk))
-# 163
 s = random.sample(texts_with_unk, 5)
 
 # tk = tokenizer('- Некди теnиз былай тузлу? – деb сейирсинnенди.').input_ids
@@ -134,7 +131,7 @@ texts_with_unk_normed = [
 print(len(texts_with_unk_normed))  # 0
 
 
-# In this case we can say that unk tokens it is just a punctuation, so there is no need to normalize the text
+# In this case we can say that unk tokens it is just a punctuation.
 
 
 # 5.EXPANDING VOCABULARY ------------------------------------------------
@@ -166,11 +163,11 @@ spm.SentencePieceTrainer.train(
     required_chars=''.join([k for k, v in chars_cnt.most_common() if v >= 3 and k not in ' ']),
 )
 
-# After training a tokenizer, I perform a “surgical opeAfter training a QM tokenizer, I perform a “surgical operation” 
+# After training a QM tokenizer, I perform a “surgical operation” 
 # with it: extracting the sentencepiece model from the standard NLLB tokenizer and enriching it from all tokens 
 # from the QM tokenizer that have been missing from the NLLB tokenizer (based on the example from the sentencepiece repo).
 
-# reading the NLLB and the Tyvan sentencepiece models into a native format
+# reading the NLLB and the QM sentencepiece models into a native format
 sp_trained = spm.SentencePieceProcessor(model_file=f'{SPM_PREFIX}.model')
 added_spm = sp_pb2_model.ModelProto()
 added_spm.ParseFromString(sp_trained.serialized_model_proto())
@@ -210,11 +207,11 @@ with open(NEW_SPM_NAME, 'wb') as f:
 
 # 6.UPDATING TOKENIZER VOCABLUARY ------------------------------------------------
 
-tokenizer_old = NllbTokenizer.from_pretrained('facebook/nllb-200-distilled-600M')
+tokenizer_old = NllbTokenizer.from_pretrained(MODEL_NAME)
 print(len(tokenizer_old))
 print(tokenizer_old.convert_ids_to_tokens([256202, 256203]))
 
-tokenizer = NllbTokenizer.from_pretrained('facebook/nllb-200-distilled-600M', vocab_file=NEW_SPM_NAME)
+tokenizer = NllbTokenizer.from_pretrained(MODEL_NAME, vocab_file=NEW_SPM_NAME)
 print(len(tokenizer))
 print(tokenizer.convert_ids_to_tokens([262923, 262924]))
 
@@ -343,7 +340,7 @@ generated_tokens = model.generate(
 tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
 # => "Le chef de l 'ONU affirme qu 'il n 'y a pas de solution militaire dans la Syrie."
 
-# Translation to Russian has broken, because some new qm tokens are very Russian-like, and they interere. 
+# translate Hindi to Russian
 generated_tokens = model.generate(
     **encoded_hi,
     forced_bos_token_id=tokenizer.lang_code_to_id["rus_Cyrl"],
@@ -354,7 +351,7 @@ generated_tokens = model.generate(
 tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
 # => "Le chef de l 'ONU affirme qu 'il n 'y a pas de solution militaire dans la Syrie."
 
-# translate from Qrachay-Malqar! 
+# translate Qarachay-Malqar to Russian 
 # qm, ru = random.choice(all_pairs)
 df = all_sentences.sample(1)[['krc', 'rus']]
 qm = df.krc.to_list()
