@@ -5,7 +5,9 @@ Authors: Bogdan Tewunalany, Ali Berberov
 We collect 265718 parallel sentences between russian and Qarachay-Malqar languages. There were two ways to make the translator:  
   * First, We made transformwer on Tensorflow/Keras on R. But fine-tuning of existing model is better.    
   * Second, We used pre-trained model nllb-200 and fine-tuned it.  
-[Model](https://huggingface.co/TSjB/mbart-large-52-ru-qm-v2](https://huggingface.co/TSjB/NLLB-201-600M-QM-V1)    
+
+[Model](https://huggingface.co/TSjB/NLLB-201-600M-QM-V1)
+
 Where to use:
 [HF](https://huggingface.co/spaces/TSjB/QM_RU_translator) and [site](https://tsjb-qm-ru-translator.hf.space/?)
 
