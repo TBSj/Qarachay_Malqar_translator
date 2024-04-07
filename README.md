@@ -11,6 +11,9 @@ We collect 288532 parallel sentences between russian and Qarachay-Malqar languag
 Where to use:
 [HF](https://huggingface.co/spaces/TSjB/Qarachay-Malqar_translator) and [site](https://tsjb-qarachay-malqar-translator.hf.space)
 
+Parallel corpora:
+[As is](https://huggingface.co/datasets/TSjB/qarachay-malqar_russian_parallel_corpora) and [Dialects free](https://huggingface.co/datasets/TSjB/qarachay-malqar_russian_parallel_corpora_dialectic-free)
+
 Authors telegram:
 [Bogdan](https://t.me/bogdan_tewunalany) and
 [Ali](https://t.me/ali_bulat1990)  
