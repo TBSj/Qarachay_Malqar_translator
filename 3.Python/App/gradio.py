@@ -1,18 +1,38 @@
 # 1. Libraries
+from datasets import load_dataset
 import gradio as gr
 import torch
 from transformers import AutoModelForSeq2SeqLM, NllbTokenizer
 import pandas as pd
-from datasets import load_dataset
+import random
+import string
 
 # 2. Constants
-MODEL_PATH = 'TSjB/NLLB-201-600M-QM-V2'
-DATA_PATH = "TSjB/dictionary_krc_rus"
+# Translation
+MODEL_TRANSLATE_PATH = 'TSjB/NLLB-201-600M-QM-V2'
+
+# Dictionary
+DATA_DICTIONARY_PATH = "TSjB/dictionary_krc_rus"
+OUTPUT_ROW_BY_EVERY_DICTIONARY = 15
+
+# TTS
+LANGUAGE_KRC_TTS = 'cyrillic'
+MODEL_ID_KRC_TTS = 'v4_cyrillic'
+
+SAMPLE_RATE_TTS = 48000
+SPEAKER_KRC_TTS = 'b_krc'
+
+REPO_TTS_PATH = "snakers4/silero-models"
+MODEL_TTS_PATH = "silero_tts"
+
+
+
+
 
 # LANGUAGE = pd.DataFrame({"language": ["Къарачай-Малкъар тил", "Русский язык", "English", "Türk dili"], "token": ["krc_Cyrl", "rus_Cyrl", "eng_Latn", "tur_Latn"]})
 LANGUAGE = pd.DataFrame({"language": ["Къарачай-Малкъар тил", "Русский язык"], "token": ["krc_Cyrl", "rus_Cyrl"]})
 DIALECT = pd.DataFrame({"dialect": ["дж\ч", "ж\ч", "з\ц"], "short_name": ["qrc", "hlm", "mqr"]})
-TYPE = pd.DataFrame({"krc": ["Кёчюрюўчю", "Сёзлюк"], "rus": ["Переводчик", "Словарь"], "eng": ["Translator", "Dictionary"], "tur": ["Çevirmen", "Sözlük."], "short_name": ["translator", "dictionary"]})
+TYPE = pd.DataFrame({"krc": ["Кёчюрюўчю", "Сёзлюк", "Сёлешиўчю"], "rus": ["Переводчик", "Словарь", "Озвучка"], "eng": ["Translator", "Dictionary", "Voice"], "tur": ["Çevirmen", "Sözlük", "Seslendirme"], "short_name": ["translator", "dictionary", "tts"]})
 
 SYSTEM_LANG = "rus"
 # NAMES = pd.DataFrame({
@@ -23,21 +43,22 @@ SYSTEM_LANG = "rus"
 #    "eng": ["# Qarachay-Malqar translator", "from", "to", "Write here...", "Translated text is here", "Qarachay-Malqar dialect", "Translate", "The first translator. Created by [Bogdan Tewunalany](https://t.me/bogdan_tewunalany), [Ali Berberov](https://t.me/ali_berberov)\n\nSince the model was trained in pairs of Russian and Qarachay-Malqar, the Qarachay-Malqar translation for other languages may be worse."]
 # })
 NAMES = pd.DataFrame({
-   "id": ["title", "type", "from", "to", "your_sent", "transl_sent", "dialect", "translate", "annotation", "word_absence"],
-   "krc": ["# Къарачай-Малкъар сёзлюк бла кёчюрюўчю", "Тюрлюсю", "тилден", "тилге", "Мында джаз...", "Кёчюрюлгени", "Къарачай-Малкъарны диалекти", "Кёчюр","Къарачай-малкъар, орус тиллени арасында биринчи кёчюрюўчюдю. Сёзлюк да ичине салыннганды.\n\n[Богдан Теўуналаны](https://t.me/bogdan_tewunalany), [Али Берберлени](https://t.me/ali_berberov) къурагъандыла\n\nСоинвестированиени эмда спонсорлукъ болушлукъну юсюнден [Али Берберовгъа](https://t.me/ali_berberov) соругъуз", "Сорулгъаны сёзлюкде табылмагъанды."],
-   "rus": ["# Карачаево-балкарский словарь и переводчик", "Тип", "из", "на", "Напишите здесь...", "Переведённый текст", "Карачаево-балкарский диалект", "Перевести","Первый переводчик между карачаево-балкарским и русским языками. Также встроен словарь для отдельных слов или коротких фраз.\n\nРазработчики: [Богдан Теунаев](https://t.me/bogdan_tewunalany), [Али Берберов](https://t.me/ali_berberov)\n\nПо вопросам соинвестирования и спонсорской поддержки обращайтесь к [Али Берберову](https://t.me/ali_berberov)", "Запрашиваемое в словаре не найдено."],
-   "tur": ["# Karaçayca-Balkarca sözlük ve çevirmen", "Tür", "dilden", "dile", "Buraya yaz...", "Çevrilmiş metin burada", "Karaçay-Malkar lehçesi", "Tercüme edin", "Karaçay-Balkarca ve Rusça dilleri arasındaki ilk çevirmen. Tek tek kelimeler veya kısa ifadeler için bir sözlük de yerleşiktir.\n\nGeliştiriciler: [Bogdan Tewunalanı](https://t.me/bogdan_tewunalany), [Ali Berberov](https://t.me/ali_berberov)\n\nOrtak yatırım ve sponsorluk ile ilgili sorularınız için [Ali Berberov](https://t.me/ali_berberov) ile iletişime geçin", "Sorge sözlükte bulunmuyor."],
-   "eng": ["# Qarachay-Malqar dictionary and translator", "Type", "from", "to", "Write here...", "Translated text is here", "Qarachay-Malqar dialect", "Translate", "The first translator between Qarachay-Malqar and Russian languages. A dictionary for individual words or short phrases is also built in.\n\nDevelopers: [Bogdan Tewunalany](https://t.me/bogdan_tewunalany), [Ali Berberov](https://t.me/ali_berberov)\n\nFor co-investment and sponsorship, please contact [Ali Berberov] (https://t.me/ali_berberov)", "The requested was not found in the dictionary."]
+   "id": ["title", "type", "from", "to", "your_sent", "your_sent_tts", "transl_sent", "dialect", "translate", "annotation", "word_absence", "sound"],
+   "krc": ["# Къарачай-Малкъар сёзлюк бла кёчюрюўчю", "Тюрлюсю", "тилден", "тилге", "Мында джаз...", "Къарачай-Малкъарча мында джаз...", "Кёчюрюлгени", "Къарачай-Малкъарны диалекти", "Кёчюр","Къарачай-малкъар, орус тиллени арасында биринчи кёчюрюўчюдю. Сёзлюк да эмда Къарачай-Малкъар сёлешиўчю ичине салыннганды.\n\n[Богдан Теўуналаны](https://t.me/bogdan_tewunalany), [Али Берберлени](https://t.me/ali_berberov) къурагъандыла\n\nСоинвестированиени эмда спонсорлукъ болушлукъну юсюнден [Али Берберовгъа](https://t.me/ali_berberov) соругъуз", "Сорулгъаны сёзлюкде табылмагъанды.", "Сёлешдир"],
+   "rus": ["# Карачаево-балкарский словарь и переводчик", "Тип", "из", "на", "Напишите здесь...", "Напиши здесь по-карачаево-балкарски...", "Переведённый текст", "Карачаево-балкарский диалект", "Перевести","Первый переводчик между карачаево-балкарским и русским языками. Встроен словарь для отдельных слов или коротких фраз и озвучка карачаево-балкарского текста.\n\nРазработчики: [Богдан Теунаев](https://t.me/bogdan_tewunalany), [Али Берберов](https://t.me/ali_berberov)\n\nПо вопросам соинвестирования и спонсорской поддержки обращайтесь к [Али Берберову](https://t.me/ali_berberov)", "Запрашиваемое в словаре не найдено.", "Озвучить"],
+   "tur": ["# Karaçayca-Balkarca sözlük ve çevirmen", "Tür", "dilden", "dile", "Buraya yaz...", "Buraya Karaçay-Balkarca yaz...", "Çevrilmiş metin burada", "Karaçay-Malkar lehçesi", "Tercüme edin", "Karaçay-Balkarca ve Rusça dilleri arasındaki ilk çevirmen. Tek tek kelimeler veya kısa ifadeler için bir sözlük ve Karaçay-Balkar metninin seslendirmesi de yerleşiktir.\n\nGeliştiriciler: [Bogdan Tewunalanı](https://t.me/bogdan_tewunalany), [Ali Berberov](https://t.me/ali_berberov)\n\nOrtak yatırım ve sponsorluk ile ilgili sorularınız için [Ali Berberov](https://t.me/ali_berberov) ile iletişime geçin", "Sorge sözlükte bulunmuyor.", "Ses vermek"],
+   "eng": ["# Qarachay-Malqar dictionary and translator", "Type", "from", "to", "Write here...", "Write here in Karachay-Balkar...", "Translated text is here", "Qarachay-Malqar dialect", "Translate", "The first translator between Qarachay-Malqar and Russian languages. There is also a built-in dictionary for individual words or short phrases and voice acting of the Karachay-Balkar text.\n\nDevelopers: [Bogdan Tewunalany](https://t.me/bogdan_tewunalany), [Ali Berberov](https://t.me/ali_berberov)\n\nFor co-investment and sponsorship, please contact [Ali Berberov] (https://t.me/ali_berberov)", "The requested was not found in the dictionary.", "Voice over"]
 })
 
 
-OUTPUT_ROW_BY_EVERY_DICTIONARY = 15
+device = torch.device('cpu')
 
-FILEPATH_SOURCE_PREPARED = "1.Data/Dictionary"
+# FILEPATH_SOURCE_PREPARED = "1.Data/Dictionary"
 # dictionary = pd.read_csv("%s/dictionary.csv" % FILEPATH_SOURCE_PREPARED, sep = ";")
 
 # 3. Upload
-dictionary = load_dataset(DATA_PATH)
+# Dictionary
+dictionary = load_dataset(DATA_DICTIONARY_PATH)
 dictionary = pd.DataFrame(dictionary['train'])
 
 dictionary["soz"] = dictionary.soz.str.upper()
@@ -47,9 +68,17 @@ dictionary["belgi_l"] = dictionary.belgi.str.lower()
 dictionary_qm = dictionary[dictionary.til == "krc"]
 dictionary_ru = dictionary[dictionary.til == "rus"]
 
+# Tranlation
+tokenizer = NllbTokenizer.from_pretrained(MODEL_TRANSLATE_PATH)
+model_translate = AutoModelForSeq2SeqLM.from_pretrained(MODEL_TRANSLATE_PATH)
 
-tokenizer = NllbTokenizer.from_pretrained(MODEL_PATH)
-model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_PATH)
+# TTS
+model_tts, _  = torch.hub.load(repo_or_dir = REPO_TTS_PATH,
+                                     model = MODEL_TTS_PATH,
+                                     language = LANGUAGE_KRC_TTS,
+                                     speaker = MODEL_ID_KRC_TTS)
+                                     
+model_tts.to(device)
 
 # 4. Fix tokenizer
 def fixTokenizer(tokenizer, new_lang='krc_Cyrl'):
@@ -362,9 +391,9 @@ def translatePy(text, src_lang='rus_Cyrl', tgt_lang='krc_Cyrl',
         text, return_tensors='pt', padding=True, truncation=True,
         max_length=max_input_length
     )
-    model.eval() # turn off training mode
-    result = model.generate(
-        **inputs.to(model.device),
+    model_translate.eval() # turn off training mode
+    result = model_translate.generate(
+        **inputs.to(model_translate.device),
         forced_bos_token_id=tokenizer.convert_tokens_to_ids(tgt_lang),
         max_new_tokens=int(a + b * inputs.input_ids.shape[1]),
         num_beams=num_beams, **kwargs
@@ -372,22 +401,41 @@ def translatePy(text, src_lang='rus_Cyrl', tgt_lang='krc_Cyrl',
     return tokenizer.batch_decode(result, skip_special_tokens=True)[0]
 
 
-def translateProcess(text, from_, to, dialect):
-    # print(from_)
-    # print(to)
-    # print(dialect)
-    if from_ == 'krc_Cyrl':
-      text = toModel(text)
+def translateDisp(text, from_, to, dialect):
+  # print(from_)
+  # print(to)
+  # print(dialect)
+  if dialect == "" or dialect is None:
+    dialect = DIALECT.dialect[0] # "дж\ч"
+  if from_ == "" or from_ is None:
+    from_ = LANGUAGE.language[1] # "Русский язык"
+  if to == "" or to is None:
+    to = LANGUAGE.language[0] # "Къарачай-Малкъар тил"
     
-    str_ = translatePy(text, src_lang = from_, tgt_lang = to)
+  from_ = "".join(LANGUAGE[LANGUAGE.language == from_].token.to_list())
+  to = "".join(LANGUAGE[LANGUAGE.language == to].token.to_list())
+  dialect = "".join(DIALECT[DIALECT.dialect == dialect].short_name.to_list())
+  
     
-    if to == 'krc_Cyrl':
-      str_ = fromModel(str_, dialect = dialect)
+  if from_ == 'krc_Cyrl':
+    text = toModel(text)
     
-    return str_
+  str_ = translatePy(text, src_lang = from_, tgt_lang = to)
+  
+  if to == 'krc_Cyrl':
+    str_ = fromModel(str_, dialect = dialect)
+    
+  return str_
   
 # 7. Dictionary function
-def dictionaryDisp(from_, text):
+def dictionaryDisp(text, from_):
+  
+  if from_ == "" or from_ is None:
+    from_ = LANGUAGE.language[1] # "Русский язык"
+      
+  from_ = "".join(LANGUAGE[LANGUAGE.language == from_].token.to_list())
+
+    
   str_l = text.lower()
   filter_ = r"\W+" + str_l + r"|^" + str_l
   
@@ -416,39 +464,26 @@ def dictionaryDisp(from_, text):
   sozluk = [x.soz + " ----- " + x.belgi + "\n\n----------\n\n" for x in sozluk.itertuples()]
   sozluk = "".join(sozluk)
   
+  if(len(sozluk) == 0):
+      sozluk = NAMES[NAMES.id == "word_absence"][SYSTEM_LANG].values[0]
+      
   return sozluk
   # len(sozluk)
   
   
-# 8. Output function 
-def out(text, from_, to, dialect, type_):
-  type_col = SYSTEM_LANG
-  
-  if dialect == "" or dialect is None:
-    dialect = "дж\ч"
-  if from_ == "" or from_ is None:
-    from_ = "Русский язык"
-  if to == "" or to is None:
-    to = "Къарачай-Малкъар тил"
-  if type_ == "" or type_ is None:
-    type_ = "Кёчюрюўчю"
-    type_col = "krc"
+# 8. Voice function 
+def tts(text):
+    file_voice = ''.join(random.choices(string.ascii_letters, k=8))
+    file_voice = f'{file_voice}.wav'
     
-  from_ = "".join(LANGUAGE[LANGUAGE.language == from_].token.to_list())
-  to = "".join(LANGUAGE[LANGUAGE.language == to].token.to_list())
-  dialect = "".join(DIALECT[DIALECT.dialect == dialect].short_name.to_list())
-  type_ = "".join(TYPE[TYPE[type_col] == type_].short_name.to_list())
-    
-    
-  if type_ == "dictionary":
-    str_ = dictionaryDisp(from_, text)
-    if(len(str_) == 0):
-      str_ = NAMES[NAMES.id == "word_absence"][SYSTEM_LANG].values[0]
-  elif type_ == "translator":
-    str_ = translateProcess(text, from_, to, dialect)
-      # str_ = "myaf"
-  
-  return(str_)
+    model_tts.save_wav(
+      audio_path = file_voice,
+      text = text,
+      speaker=SPEAKER_KRC_TTS,
+      sample_rate=SAMPLE_RATE_TTS
+        )
+
+    return file_voice
 
 # 9. Definition ui
 _title = "".join(NAMES[NAMES.id == "title"][SYSTEM_LANG].to_list())
@@ -456,44 +491,111 @@ _type = "".join(NAMES[NAMES.id == "type"][SYSTEM_LANG].to_list())
 _from = "".join(NAMES[NAMES.id == "from"][SYSTEM_LANG].to_list())
 _to = "".join(NAMES[NAMES.id == "to"][SYSTEM_LANG].to_list())
 _your_sent = "".join(NAMES[NAMES.id == "your_sent"][SYSTEM_LANG].to_list())
+_your_sent_tts = "".join(NAMES[NAMES.id == "your_sent_tts"][SYSTEM_LANG].to_list())
 _transl_sent = "".join(NAMES[NAMES.id == "transl_sent"][SYSTEM_LANG].to_list())
 _dialect = "".join(NAMES[NAMES.id == "dialect"][SYSTEM_LANG].to_list())
 _translate = "".join(NAMES[NAMES.id == "translate"][SYSTEM_LANG].to_list())
 _annotation = "".join(NAMES[NAMES.id == "annotation"][SYSTEM_LANG].to_list())
+_sound = "".join(NAMES[NAMES.id == "sound"][SYSTEM_LANG].to_list())
  
+# with gr.Blocks() as demo:
+#     gr.Markdown(_title)
+#     with gr.Row():
+# 
+#       with gr.Column():
+#         with gr.Row():
+#             choice_type = gr.Dropdown(
+#               choices = TYPE[SYSTEM_LANG].to_list(), label=_type, value = TYPE[SYSTEM_LANG][0])
+# 
+#             choice_input = gr.Dropdown(
+#               choices = LANGUAGE.language.to_list(), label=_from, value = "Русский язык")
+# 
+# 
+# 
+#       with gr.Column():
+#         with gr.Row():
+#             choice_output = gr.Dropdown(
+#               choices = LANGUAGE.language.to_list(), label=_to, value = "Къарачай-Малкъар тил")
+# 
+#             dialect = gr.Dropdown(
+#               choices = DIALECT.dialect.to_list(), label=_dialect, value = "дж\ч")
+# 
+#     with gr.Row():
+#       with gr.Column():
+#         text_input = gr.Textbox(lines=15, placeholder=_your_sent, label = "", show_copy_button=True)
+# 
+#       with gr.Column():
+#         text_output = gr.Textbox(lines=15, placeholder=_transl_sent, label = "", autoscroll=False, show_copy_button=True)
+# 
+#     text_button = gr.Button(_translate, variant = 'primary')
+# 
+#     text_button.click(out, inputs=[text_input, choice_input, choice_output, dialect, choice_type], outputs=[text_output]) # text, from, to, dialect
+# 
+#     gr.Markdown(_annotation)
+    
+    
 with gr.Blocks() as demo:
     gr.Markdown(_title)
-    with gr.Row():
-      
-      with gr.Column():
-        with gr.Row():            
-            choice_type = gr.Dropdown(
-              choices = TYPE[SYSTEM_LANG].to_list(), label=_type, value = TYPE[SYSTEM_LANG][0])
+    
+    # Translation
+    with gr.Tab(TYPE[SYSTEM_LANG][0]):
+      with gr.Row():
+        with gr.Column():
+          with gr.Row():
+            # choice_type = gr.Dropdown(
+            #   choices = TYPE[SYSTEM_LANG].to_list(), label=_type, value = TYPE[SYSTEM_LANG][0])
+            translate_lang_input = gr.Dropdown(
+              choices = LANGUAGE.language.to_list(), label=_from, value = LANGUAGE["language"][1])
               
-            choice_input = gr.Dropdown(
-              choices = LANGUAGE.language.to_list(), label=_from, value = "Русский язык")
-                           
-            
-              
-      with gr.Column():
-        with gr.Row():            
-            choice_output = gr.Dropdown(
-              choices = LANGUAGE.language.to_list(), label=_to, value = "Къарачай-Малкъар тил")
-                           
+        with gr.Column():
+          with gr.Row():
+            translate_lang_output = gr.Dropdown(
+              choices = LANGUAGE.language.to_list(), label=_to, value = LANGUAGE["language"][0])
+
             dialect = gr.Dropdown(
-              choices = DIALECT.dialect.to_list(), label=_dialect, value = "дж\ч")
-        
-    with gr.Row():
-      with gr.Column():
-        text_input = gr.Textbox(lines=15, placeholder=_your_sent, label = "", show_copy_button=True)
-        
-      with gr.Column():
-        text_output = gr.Textbox(lines=15, placeholder=_transl_sent, label = "", autoscroll=False, show_copy_button=True)
-        
-    text_button = gr.Button(_translate, variant = 'primary')
-    
-    text_button.click(out, inputs=[text_input, choice_input, choice_output, dialect, choice_type], outputs=[text_output]) # text, from, to, dialect
-    
+              # choices = DIALECT.dialect.to_list(), label=_dialect, value = "дж\ч")
+              choices = DIALECT.dialect.to_list(), label=_dialect, value = DIALECT["dialect"][0])
+
+      with gr.Row():
+        with gr.Column():
+          translate_text_input = gr.Textbox(lines=15, placeholder=_your_sent, label = "", show_copy_button=True)
+        with gr.Column():
+          translate_text_output = gr.Textbox(lines=15, placeholder=_transl_sent, label = "", autoscroll=False, show_copy_button=True)
+
+      translate_button = gr.Button(_translate, variant = 'primary')
+
+    # Dictionary
+    with gr.Tab(TYPE[SYSTEM_LANG][1]):
+      with gr.Row():
+        with gr.Column():
+          with gr.Row():
+            dict_lang_input = gr.Dropdown(
+              choices = LANGUAGE.language.to_list(), label=_from, value = LANGUAGE["language"][1])
+              
+
+      with gr.Row():
+        with gr.Column():
+          dict_text_input = gr.Textbox(lines=15, placeholder=_your_sent, label = "", show_copy_button=True)
+        with gr.Column():
+          dict_text_output = gr.Textbox(lines=15, placeholder=_transl_sent, label = "", autoscroll=False, show_copy_button=True)
+
+      dict_button = gr.Button(_translate, variant = 'primary')
+      
+    # TTS
+    with gr.Tab(TYPE[SYSTEM_LANG][2]):
+      with gr.Row():
+        with gr.Column():
+          tts_text_input = gr.Textbox(lines=3, placeholder=_your_sent_tts, label = "", show_copy_button=True)
+        with gr.Column():
+          tts_text_output = gr.Audio(label = "", type = 'filepath')
+
+      tts_button = gr.Button(_sound, variant = 'primary')
+
+
+    translate_button.click(translateDisp, inputs=[translate_text_input, translate_lang_input, translate_lang_output, dialect], outputs=[translate_text_output]) # text, from, to, dialect
+    dict_button.click(dictionaryDisp, inputs=[dict_text_input, dict_lang_input], outputs=[dict_text_output]) # text, from
+    tts_button.click(tts, inputs=[tts_text_input], outputs=[tts_text_output]) # text
+
     gr.Markdown(_annotation)
 
 # 10. Launch
