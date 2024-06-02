@@ -27,8 +27,6 @@ MODEL_TTS_PATH = "silero_tts"
 
 
 
-
-
 # LANGUAGE = pd.DataFrame({"language": ["Къарачай-Малкъар тил", "Русский язык", "English", "Türk dili"], "token": ["krc_Cyrl", "rus_Cyrl", "eng_Latn", "tur_Latn"]})
 LANGUAGE = pd.DataFrame({"language": ["Къарачай-Малкъар тил", "Русский язык"], "token": ["krc_Cyrl", "rus_Cyrl"]})
 DIALECT = pd.DataFrame({"dialect": ["дж\ч", "ж\ч", "з\ц"], "short_name": ["qrc", "hlm", "mqr"]})
@@ -416,7 +414,8 @@ def translateDisp(text, from_, to, dialect):
   to = "".join(LANGUAGE[LANGUAGE.language == to].token.to_list())
   dialect = "".join(DIALECT[DIALECT.dialect == dialect].short_name.to_list())
   
-    
+  text = text.strip()
+  
   if from_ == 'krc_Cyrl':
     text = toModel(text)
     
@@ -435,7 +434,7 @@ def dictionaryDisp(text, from_):
       
   from_ = "".join(LANGUAGE[LANGUAGE.language == from_].token.to_list())
 
-    
+  text = text.strip()
   str_l = text.lower()
   filter_ = r"\W+" + str_l + r"|^" + str_l
   
@@ -475,6 +474,7 @@ def dictionaryDisp(text, from_):
 def tts(text):
     file_voice = ''.join(random.choices(string.ascii_letters, k=8))
     file_voice = f'{file_voice}.wav'
+    text = text.strip()
     
     model_tts.save_wav(
       audio_path = file_voice,
