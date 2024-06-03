@@ -34,7 +34,7 @@ library(telegram.bot.bt)
 # FILEPATH_SOURCE_PREPARED <- str_replace(this.dir(), strsplit(this.dir(), '/')[[1]] %>% last(), "Source_prepared")
 FILEPATH_SOURCE_PREPARED <- "1.Data"
 
-FILE_TEXT <- file.path(FILEPATH_SOURCE_PREPARED, "Bary_bir_to_model.csv")
+FILE_TEXT <- file.path(FILEPATH_SOURCE_PREPARED, "Text/All.csv")
 # FILE_TEXT <- file.path(FILEPATH_SOURCE_PREPARED, "Bary_besh_to_model.csv")
 
 SRC_LANG <- 'rus'
@@ -45,7 +45,7 @@ TRG_LANG <- 'krc'
 
 # MODEL_PATH_SRC_BPE    <- file.path(this.dir(), 'BPE', paste0("youtokentome_", SRC_LANG, ".bpe"))
 # MODEL_PATH_TARGET_BPE <- file.path(this.dir(), 'BPE', paste0("youtokentome_", TRG_LANG, ".bpe"))
-MODEL_DIR <- str_replace(this.dir(), 'Qarachay_Malqar_translator/2.R', "Models")
+MODEL_DIR <- "5.Model"
 MODEL_PATH_SRC_BPE    <- file.path(MODEL_DIR, 'BPE', paste0("youtokentome_", SRC_LANG, ".bpe"))
 MODEL_PATH_TARGET_BPE <- file.path(MODEL_DIR, 'BPE', paste0("youtokentome_", TRG_LANG, ".bpe"))
 
@@ -66,8 +66,8 @@ text_pairs <- FILE_TEXT %>%
 
 str(text_pairs[sample(nrow(text_pairs), 1), ])
 
-# src_vocab_size_for_bpe    <- round(strsplit(text_pairs[[SRC_LANG]],    ' ') %>% unlist() %>% uniqueN() * 0.7)
-# target_vocab_size_for_bpe <- round(strsplit(text_pairs[[TRG_LANG]], ' ') %>% unlist() %>% uniqueN() * 0.7)
+# src_vocab_size_for_bpe    <- round(strsplit(text_pairs[[SRC_LANG]],    ' ') %>% unlist() %>% uniqueN() * 0.3)
+# target_vocab_size_for_bpe <- round(strsplit(text_pairs[[TRG_LANG]], ' ') %>% unlist() %>% uniqueN() * 0.3)
 
 #    2.2. BPE                         ####
 # model_src_bpe <- bpe(x      = text_pairs[[SRC_LANG]],
@@ -75,7 +75,7 @@ str(text_pairs[sample(nrow(text_pairs), 1), ])
 #                  vocab_size = src_vocab_size_for_bpe,
 #                  threads    = 1,
 #                  model_path = MODEL_PATH_SRC_BPE)
-
+# 
 # model_trg_bpe <- bpe(x         = text_pairs[[TRG_LANG]],
 #                      coverage   = 0.999,
 #                      vocab_size = target_vocab_size_for_bpe,
@@ -108,7 +108,8 @@ trg_diglist <- bpe_encode(model = model_trg_bpe,
 
 trg_maxlen <- lapply(trg_diglist, length) %>% unlist() %>% max()
 
-sequence_length <- max(trg_maxlen, src_maxlen) # 152
+# sequence_length <- max(trg_maxlen, src_maxlen) # 152
+sequence_length <- 512 # 152
 
 src_matrix <-
   pad_sequences(src_diglist, maxlen = sequence_length,  padding = "post")
@@ -117,7 +118,7 @@ trg_matrix <-
   pad_sequences(trg_diglist, maxlen = sequence_length + 1, padding = "post")
 
 #    2.3. Train-test-split            ####
-num_test_samples <- 10
+num_test_samples <- 1000
 num_val_samples <- round(0.2 * nrow(text_pairs))
 
 num_train_samples <- nrow(text_pairs) - num_val_samples - num_test_samples
@@ -144,16 +145,16 @@ trg_vocab_size <- model_trg_bpe$vocab_size # 40520
 
 dropout_rate <- 0.4 # Дропаут
 embed_dim <- 256  # Количество нейронов в слое (или глубина внимания) (Эм иги 512, компьютерим тарталмайды)
-dense_dim <- 1024 #  Расстояние позиций (токенов) для слоя позиционно-зависимого прямого распространения (Эм иги 2048, компьютерим тарталмайды)
-num_heads <- 8 # Кол-во голов внимания (8)
+dense_dim <- 512 #  Расстояние позиций (токенов) для слоя позиционно-зависимого прямого распространения (Эм иги 2048, компьютерим тарталмайды)
+num_heads <- 4 # Кол-во голов внимания (8)
 # num_layers <- 4 # Кол-во слоёв (6)
 
 
 buffer_size <- nrow(x_train)
 learning_rate  <-  1e-3 # 1e-4
-epoches <- 5
+epoches <- 4
 ep_stop <- 2
-batch_size <- 16 # 64
+batch_size <- 4 # 64
 regul <- regularizer_l1_l2(l1 = learning_rate, l2 = learning_rate)
 #    2.5. Preparing matrix tf         ####
 # Слой векторизации можно вызывать как с пакетными, так и с непакетными данными. Здесь мы применяем векторизацию перед пакетной обработкой данных
@@ -192,16 +193,16 @@ val_ds <- tensor_slices_dataset(keras_array(list(src = x_valid, trg = y_valid)))
 
 #    2.6. Bot                         ####
 
-MobiDickMessage <- function(text = 'юйренибди', chat_id = '428576415', token = "5195278336:AAEn7oQyXox7CQFzNpQHnjNqqC1KKBU3MgY"){
-
-  bot <- Bot(token=token)
-
-  mess <- bot$sendMessage(chat_id = chat_id,
-                          text = text,
-                          parse_mode = "Markdown"
-  )
-
-}
+# MobiDickMessage <- function(text = 'юйренибди', chat_id = '428576415', token = "5195278336:AAEn7oQyXox7CQFzNpQHnjNqqC1KKBU3MgY"){
+# 
+#   bot <- Bot(token=token)
+# 
+#   mess <- bot$sendMessage(chat_id = chat_id,
+#                           text = text,
+#                           parse_mode = "Markdown"
+#   )
+# 
+# }
 
 # 3. Preparing model                  ####
 #    3.1. PositionalEmbedding         ####
@@ -435,7 +436,7 @@ encoder_outputs <- encoder_inputs %>%
   # layer_transformer_encoder(embed_dim, dense_dim, num_heads, dropout = dropout_rate)
   layer_transformer_encoder(embed_dim, dense_dim, num_heads) %>% 
   # layer_transformer_encoder(embed_dim, dense_dim, num_heads) %>% 
-  layer_transformer_encoder(embed_dim, dense_dim, num_heads) %>% 
+  # layer_transformer_encoder(embed_dim, dense_dim, num_heads) %>% 
   layer_transformer_encoder(embed_dim, dense_dim, num_heads) 
 
 # Передаем NULL в качестве первого аргумента, чтобы экземпляр слоя создавался и возвращался напрямую, ни с чем не смешиваясь
@@ -450,7 +451,7 @@ decoder_outputs <- decoder_inputs %>%
 
   # transformer_decoder(encoder_outputs) %>% # Кодируем целевое предложение и объединяем его с закодированным исходным предложением
   layer_transformer_decoder(NULL, embed_dim, dense_dim, num_heads)(., encoder_outputs) %>% 
-  layer_transformer_decoder(NULL, embed_dim, dense_dim, num_heads)(., encoder_outputs) %>% 
+  # layer_transformer_decoder(NULL, embed_dim, dense_dim, num_heads)(., encoder_outputs) %>% 
   # layer_transformer_decoder(NULL, embed_dim, dense_dim, num_heads)(., encoder_outputs) %>% 
   layer_transformer_decoder(NULL, embed_dim, dense_dim, num_heads)(., encoder_outputs) %>% 
   layer_dropout(dropout_rate) %>%
@@ -529,7 +530,7 @@ transformer %>%
   fit(train_ds, epochs = epoches, validation_data = val_ds, callbacks = callbacks_list) # 30
   # fit(train_ds, epochs = epoches, validation_data = val_ds) # 30
   # fit(train_ds, epochs = 1, validation_data = val_ds, callbacks = callbacks_list) # 30
-MobiDickMessage(paste0(Sys.time(), ' заманда юйренибди'))
+# MobiDickMessage(paste0(Sys.time(), ' заманда юйренибди'))
 
 # 5. Save model                       ####
 save_model_hdf5(transformer, filepath = TRANSFORMER_FILE_ALL)
@@ -612,6 +613,10 @@ toModel <- function(string){
     str_replace_all('Нг|НГ', '  N')
   # str_replace_all('\\bчап', 'чаб')  # чаб бла
 }
+
+# str_word_to <- toModel(str_word)
+
+
 fromModel <- function(string,
                       dialect = 'qrc' # 'hlm', 'mqr'
 ){
@@ -705,7 +710,7 @@ fromModel <- function(string,
       str_replace_all('W', 'Ў') %>%
       str_replace_all('n', 'нг') %>%
       str_replace_all('N', 'Нг')
-
+    
   } else if(dialect == 'mqr'){
     string %>%
       str_replace_all('\\bтюл', 'тюйюл') %>%
@@ -758,7 +763,7 @@ fromModel <- function(string,
       str_replace_all('П', 'Ф') %>%
       str_replace_all('къ\\b|гъ\\b', 'х')
   }
-
+  
 }
 # tf_function
 
