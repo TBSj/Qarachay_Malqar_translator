@@ -49,34 +49,43 @@ MODEL_DIR <- "5.Model"
 MODEL_PATH_SRC_BPE    <- file.path(MODEL_DIR, 'BPE', paste0("youtokentome_", SRC_LANG, ".bpe"))
 MODEL_PATH_TARGET_BPE <- file.path(MODEL_DIR, 'BPE', paste0("youtokentome_", TRG_LANG, ".bpe"))
 
-TRANSFORMER_NAME <- paste0('transformer_', SRC_LANG, '_to_',TRG_LANG, '.h5')
+
+# All sentences
+TRANSFORMER_NAME_SENT <- paste0('transformer_', SRC_LANG, '_to_',TRG_LANG, '.h5')
 
 # TRANSFORMER_FILE <- file.path(this.dir(), 'model', TRANSFORMER_NAME)
-TRANSFORMER_FILE <- file.path(MODEL_DIR, TRANSFORMER_NAME)
+TRANSFORMER_FILE_SENT <- file.path(MODEL_DIR, TRANSFORMER_NAME_SENT)
 
+# All corpus
 TRANSFORMER_NAME_ALL <- paste0('transformer_', SRC_LANG, '_to_',TRG_LANG, '_all.h5')
 
 TRANSFORMER_FILE_ALL <- file.path(MODEL_DIR, TRANSFORMER_NAME_ALL)
 
 # 2. Preparing                        ####
 #    2.1. Download dataset            ####
-text_pairs <- FILE_TEXT %>%
+df_all <- FILE_TEXT %>%
   fread()
   # .[seq(15000)] # for examples
 
-str(text_pairs[sample(nrow(text_pairs), 1), ])
+df_sent <- df_all %>% 
+  copy %>% 
+  .[c("one_sentence", "several_sentences"), on = 'type']
 
-# src_vocab_size_for_bpe    <- round(strsplit(text_pairs[[SRC_LANG]],    ' ') %>% unlist() %>% uniqueN() * 0.3)
-# target_vocab_size_for_bpe <- round(strsplit(text_pairs[[TRG_LANG]], ' ') %>% unlist() %>% uniqueN() * 0.3)
+
+str(df_all[sample(nrow(df_all), 1), ])
+
+# src_vocab_size_for_bpe    <- round(strsplit(df_all[[SRC_LANG]],    ' ') %>% unlist() %>% uniqueN() * 0.3)
+# target_vocab_size_for_bpe <- round(strsplit(df_all[[TRG_LANG]], ' ') %>% unlist() %>% uniqueN() * 0.3)
 
 #    2.2. BPE                         ####
-# model_src_bpe <- bpe(x      = text_pairs[[SRC_LANG]],
+#         2.2.1. Tuning/loading bpe   ####
+# model_src_bpe <- bpe(x      = df_all[[SRC_LANG]],
 #                  coverage   = 0.999,
 #                  vocab_size = src_vocab_size_for_bpe,
 #                  threads    = 1,
 #                  model_path = MODEL_PATH_SRC_BPE)
 # 
-# model_trg_bpe <- bpe(x         = text_pairs[[TRG_LANG]],
+# model_trg_bpe <- bpe(x         = df_all[[TRG_LANG]],
 #                      coverage   = 0.999,
 #                      vocab_size = target_vocab_size_for_bpe,
 #                      threads    = 1,
@@ -90,52 +99,119 @@ model_trg_bpe <- bpe_load_model(MODEL_PATH_TARGET_BPE)
 
 # bpe_decode(model_src, src_diglist) %>% unlist()
 
-src_diglist <- bpe_encode(model = model_src_bpe, 
-                          x     = text_pairs[[SRC_LANG]], 
-                          type  = "ids", 
-                          bos   = TRUE, 
-                          eos   = TRUE)
 
-src_maxlen <- lapply(src_diglist, length) %>% unlist() %>% max()
+#         2.2.2. All corpus           ####
+src_diglist_all <- bpe_encode(model = model_src_bpe, 
+                              x     = df_all[[SRC_LANG]], 
+                              type  = "ids", 
+                              bos   = TRUE, 
+                              eos   = TRUE)
 
 
 
-trg_diglist <- bpe_encode(model = model_trg_bpe, 
-                          x     = text_pairs[[TRG_LANG]], 
-                          type  = "ids", 
-                          bos   = TRUE, 
-                          eos   = TRUE)
 
-trg_maxlen <- lapply(trg_diglist, length) %>% unlist() %>% max()
 
-# sequence_length <- max(trg_maxlen, src_maxlen) # 152
-sequence_length <- 512 # 152
+trg_diglist_all <- bpe_encode(model = model_trg_bpe, 
+                              x     = df_all[[TRG_LANG]], 
+                              type  = "ids", 
+                              bos   = TRUE, 
+                              eos   = TRUE)
 
-src_matrix <-
-  pad_sequences(src_diglist, maxlen = sequence_length,  padding = "post")
 
-trg_matrix <-
-  pad_sequences(trg_diglist, maxlen = sequence_length + 1, padding = "post")
+
+
+src_maxlen <- lapply(src_diglist_all, length) %>% unlist() %>% max()
+trg_maxlen <- lapply(trg_diglist_all, length) %>% unlist() %>% max()
+
+
+
+sequence_length <- max(trg_maxlen, src_maxlen) # 152
+# sequence_length <- 512 # 152
+
+src_matrix_all <-
+  pad_sequences(src_diglist_all, maxlen = sequence_length,  padding = "post")
+
+trg_matrix_all <-
+  pad_sequences(trg_diglist_all, maxlen = sequence_length + 1, padding = "post")
+
+
+rm(src_diglist_all, trg_diglist_all)
+gc()
+
+#         2.2.3. All sentences        ####
+src_diglist_sent <- bpe_encode(model = model_src_bpe, 
+                               x     = df_sent[[SRC_LANG]], 
+                               type  = "ids", 
+                               bos   = TRUE, 
+                               eos   = TRUE)
+
+
+
+trg_diglist_sent <- bpe_encode(model = model_trg_bpe, 
+                               x     = df_sent[[TRG_LANG]], 
+                               type  = "ids", 
+                               bos   = TRUE, 
+                               eos   = TRUE)
+
+
+
+src_matrix_sent <-
+  pad_sequences(src_diglist_sent, maxlen = sequence_length,  padding = "post")
+
+trg_matrix_sent <-
+  pad_sequences(trg_diglist_sent, maxlen = sequence_length + 1, padding = "post")
+
+rm(src_diglist_sent, trg_diglist_sent)
+gc()
 
 #    2.3. Train-test-split            ####
-num_test_samples <- 1000
-num_val_samples <- round(0.2 * nrow(text_pairs))
+#         2.3.1. All corpus           ####
+num_test_samples_all <- 1000
+num_val_samples_all <- round(0.2 * nrow(df_all))
 
-num_train_samples <- nrow(text_pairs) - num_val_samples - num_test_samples
+num_train_samples_all <- nrow(df_all) - num_val_samples_all - num_test_samples_all
 
-pair_group <- sample(base::c(
-  rep("train", num_train_samples),
-  rep("test", num_test_samples),
-  rep("val", num_val_samples)
+pair_group_all <- sample(base::c(
+  rep("train", num_train_samples_all),
+  rep("test", num_test_samples_all),
+  rep("val", num_val_samples_all)
 ))
 
-test_pairs <- text_pairs[pair_group == "test", ]
+test_pairs_all <- df_all[pair_group_all == "test", ]
 
-x_train <- src_matrix[pair_group == "train",]
-y_train <- trg_matrix[pair_group == "train",]
+x_train_all <- src_matrix_all[pair_group_all == "train",]
+y_train_all <- trg_matrix_all[pair_group_all == "train",]
 
-x_valid <- src_matrix[pair_group == "val",]
-y_valid <- trg_matrix[pair_group == "val",]
+x_valid_all <- src_matrix_all[pair_group_all == "val",]
+y_valid_all <- trg_matrix_all[pair_group_all == "val",]
+
+
+rm(src_matrix_all, trg_matrix_all)
+gc()
+
+#         2.3.2. All sentences        ####
+num_test_samples_sent <- 1000
+num_val_samples_sent <- round(0.2 * nrow(df_sent))
+
+num_train_samples_sent <- nrow(df_sent) - num_val_samples_sent - num_test_samples_sent
+
+pair_group_sent <- sample(base::c(
+  rep("train", num_train_samples_sent),
+  rep("test", num_test_samples_sent),
+  rep("val", num_val_samples_sent)
+))
+
+test_pairs_sent <- df_sent[pair_group_sent == "test", ]
+
+x_train_sent <- src_matrix_sent[pair_group_sent == "train",]
+y_train_sent <- trg_matrix_sent[pair_group_sent == "train",]
+
+x_valid_sent <- src_matrix_sent[pair_group_sent == "val",]
+y_valid_sent <- trg_matrix_sent[pair_group_sent == "val",]
+
+rm(src_matrix_sent, trg_matrix_sent)
+gc()
+
 
 #    2.4. Hyperparameters / variables ####
 
@@ -150,9 +226,10 @@ num_heads <- 4 # Кол-во голов внимания (8)
 # num_layers <- 4 # Кол-во слоёв (6)
 
 
-buffer_size <- nrow(x_train)
+
 learning_rate  <-  1e-3 # 1e-4
-epoches <- 4
+epoches_all <- 1
+epoches_sent <- 5
 ep_stop <- 2
 batch_size <- 4 # 64
 regul <- regularizer_l1_l2(l1 = learning_rate, l2 = learning_rate)
@@ -174,22 +251,49 @@ format_pair <- function(pair) {
   list(inputs, targets)
 }
 
-train_ds <- tensor_slices_dataset(keras_array(list(src = x_train, trg = y_train))) %>% 
+
+#         2.5.1. All corpus           ####
+buffer_size_all <- nrow(x_train_all)
+
+train_ds_all <- tensor_slices_dataset(keras_array(list(src = x_train_all, trg = y_train_all))) %>% 
   dataset_map(format_pair) %>% 
-  dataset_shuffle(buffer_size = buffer_size) %>% 
+  dataset_shuffle(buffer_size = buffer_size_all) %>% 
   dataset_batch(batch_size)  
   # dataset_prefetch(16)
 
-val_ds <- tensor_slices_dataset(keras_array(list(src = x_valid, trg = y_valid))) %>% 
+val_ds_all <- tensor_slices_dataset(keras_array(list(src = x_valid_all, trg = y_valid_all))) %>% 
   dataset_map(format_pair) %>% 
-  dataset_shuffle(buffer_size = buffer_size) %>% 
+  dataset_shuffle(buffer_size = buffer_size_all) %>% 
   dataset_batch(batch_size)  
   # dataset_prefetch(16)
 
 
-# c(inputs, targets) %<-% iter_next(as_iterator(train_ds))
-# c(inputs_v, targets_v) %<-% iter_next(as_iterator(val_ds))
+
+# c(inputs, targets) %<-% iter_next(as_iterator(train_ds_all))
+# c(inputs_v, targets_v) %<-% iter_next(as_iterator(val_ds_all))
 # str(inputs)
+
+rm(x_train_all, y_train_all, x_valid_all, y_valid_all)
+gc()
+
+#         2.5.2. All sentences        ####
+buffer_size_sent <- nrow(x_train_sent)
+
+
+train_ds_sent <- tensor_slices_dataset(keras_array(list(src = x_train_sent, trg = y_train_sent))) %>% 
+  dataset_map(format_pair) %>% 
+  dataset_shuffle(buffer_size = buffer_size) %>% 
+  dataset_batch(batch_size)  
+# dataset_prefetch(16)
+
+val_ds_sent <- tensor_slices_dataset(keras_array(list(src = x_valid_sent, trg = y_valid_sent))) %>% 
+  dataset_map(format_pair) %>% 
+  dataset_shuffle(buffer_size = buffer_size) %>% 
+  dataset_batch(batch_size)  
+# dataset_prefetch(16)
+
+rm(x_train_sent, y_train_sent, x_valid_sent, y_valid_sent)
+gc()
 
 #    2.6. Bot                         ####
 
@@ -481,13 +585,13 @@ decoder_outputs <- decoder_inputs %>%
 
 #    3.6.3. Transformer               ####
 
-transformer <- keras_model(list(encoder_inputs, decoder_inputs),
+transformer_all <- keras_model(list(encoder_inputs, decoder_inputs),
                            decoder_outputs)
 
 
 # 4. Fit                              ####
 # c(decay_steps, warmup_steps) %<-% k_bert$calc_train_steps(
-#   y_train %>% length(), # 3332952
+#   y_train_all %>% length(), # 3332952
 #   batch_size=batch_size,
 #   epochs=epoches
 # )
@@ -495,18 +599,18 @@ transformer <- keras_model(list(encoder_inputs, decoder_inputs),
 # opt <- k_bert$AdamWarmup(decay_steps=decay_steps,
 # warmup_steps=warmup_steps, learning_rate = learning_rate)
 
-transformer <- load_model_hdf5(TRANSFORMER_FILE,
-                                custom_objects =
-                                  list(PositionalEmbedding = layer_positional_embedding,
-                                       TransformerEncoderLayer = layer_transformer_encoder,
-                                       TransformerDecoderLayer = layer_transformer_decoder
-                                       # AdamWarmup = opt
-                                       )
-                               )
+# transformer_all <- load_model_hdf5(TRANSFORMER_FILE,
+#                                 custom_objects =
+#                                   list(PositionalEmbedding = layer_positional_embedding,
+#                                        TransformerEncoderLayer = layer_transformer_encoder,
+#                                        TransformerDecoderLayer = layer_transformer_decoder
+#                                        # AdamWarmup = opt
+#                                        )
+#                                )
 
 
-
-transformer %>%
+#    4.1. All corpus                  ####
+transformer_all %>%
   compile(optimizer =  keras$optimizers$Adam(learning_rate = learning_rate), #opt,#
           loss = 'sparse_categorical_crossentropy',
           metrics = 'acc')
@@ -519,31 +623,87 @@ callbacks_list <- list(
     patience = ep_stop), # Прерываем обучение, когда точность проверки перестанет улучшаться в течение двух эпох
   
   callback_model_checkpoint(
-    filepath = TRANSFORMER_FILE,
+    filepath = TRANSFORMER_FILE_ALL,
     monitor = "val_loss",
     save_best_only = TRUE)
 )
 
 
 
-transformer %>%
-  fit(train_ds, epochs = epoches, validation_data = val_ds, callbacks = callbacks_list) # 30
-  # fit(train_ds, epochs = epoches, validation_data = val_ds) # 30
-  # fit(train_ds, epochs = 1, validation_data = val_ds, callbacks = callbacks_list) # 30
+transformer_all %>%
+  fit(train_ds_all, epochs = epoches_all, validation_data = val_ds_all, callbacks = callbacks_list) # 30
+  # fit(train_ds_all, epochs = epoches, validation_data = val_ds_all) # 30
+  # fit(train_ds_all, epochs = 1, validation_data = val_ds_all, callbacks = callbacks_list) # 30
 # MobiDickMessage(paste0(Sys.time(), ' заманда юйренибди'))
 
-# 5. Save model                       ####
-save_model_hdf5(transformer, filepath = TRANSFORMER_FILE_ALL)
 
-transformer1 <- load_model_hdf5(TRANSFORMER_FILE_ALL,
-                                custom_objects = 
+# save_model_hdf5(transformer_all, filepath = TRANSFORMER_FILE_ALL)
+# 
+# transformer_all1 <- load_model_hdf5(TRANSFORMER_FILE_ALL,
+#                                 custom_objects = 
+#                                   list(PositionalEmbedding = layer_positional_embedding,
+#                                        TransformerEncoderLayer = layer_transformer_encoder,
+#                                        TransformerDecoderLayer = layer_transformer_decoder
+#                                        # AdamWarmup = opt
+#                                   ))
+
+
+#    4.2. All sentences               ####
+# transformer %>%
+#   compile(optimizer =  keras$optimizers$Adam(learning_rate = learning_rate), #opt,#
+#           loss = 'sparse_categorical_crossentropy',
+#           metrics = 'acc')
+
+transformer_sent <- load_model_hdf5(TRANSFORMER_FILE_ALL,
+                                custom_objects =
                                   list(PositionalEmbedding = layer_positional_embedding,
                                        TransformerEncoderLayer = layer_transformer_encoder,
                                        TransformerDecoderLayer = layer_transformer_decoder
                                        # AdamWarmup = opt
-                                       ))
+                                  ))
 
-# 6. Translation                      ####
+
+callbacks_list <- list(
+  # 
+  callback_early_stopping(
+    monitor = "val_loss",
+    patience = ep_stop), # Прерываем обучение, когда точность проверки перестанет улучшаться в течение двух эпох
+  
+  callback_model_checkpoint(
+    filepath = TRANSFORMER_FILE_SENT,
+    monitor = "val_loss",
+    save_best_only = TRUE)
+)
+
+
+
+transformer_sent %>%
+  fit(train_ds_sent, epochs = epoches_sent, validation_data = val_ds_sent, callbacks = callbacks_list) # 30
+# fit(train_ds_all, epochs = epoches, validation_data = val_ds_all) # 30
+# fit(train_ds_all, epochs = 1, validation_data = val_ds_all, callbacks = callbacks_list) # 30
+# MobiDickMessage(paste0(Sys.time(), ' заманда юйренибди'))
+
+
+# save_model_hdf5(transformer_sent, filepath = TRANSFORMER_FILE_SENT)
+# 
+# transformer_sent1 <- load_model_hdf5(TRANSFORMER_FILE_SENT,
+#                                 custom_objects = 
+#                                   list(PositionalEmbedding = layer_positional_embedding,
+#                                        TransformerEncoderLayer = layer_transformer_encoder,
+#                                        TransformerDecoderLayer = layer_transformer_decoder
+#                                        # AdamWarmup = opt
+#                                   ))
+
+
+# 5. Translation                      ####
+transformer <- load_model_hdf5(TRANSFORMER_FILE_SENT,
+                                custom_objects =
+                                  list(PositionalEmbedding = layer_positional_embedding,
+                                       TransformerEncoderLayer = layer_transformer_encoder,
+                                       TransformerDecoderLayer = layer_transformer_decoder
+                                       # AdamWarmup = opt
+                                  ))
+
 
 toModel <- function(string){
   string %>% 
@@ -831,11 +991,11 @@ translator <-
 
 
 # Проверка
-# for (i in sample.int(nrow(test_pairs), 3)) {
+# for (i in sample.int(nrow(test_pairs_all), 3)) {
 for (i in seq(3)) {
-  # c(input_sentence, correct_translation) %<-% test_pairs[i, ]
-  input_sentence <- test_pairs[i, ][[SRC_LANG]]
-  correct_translation <- test_pairs[i, ][[TRG_LANG]]
+  # c(input_sentence, correct_translation) %<-% test_pairs_all[i, ]
+  input_sentence <- test_pairs_all[i, ][[SRC_LANG]]
+  correct_translation <- test_pairs_all[i, ][[TRG_LANG]]
   cat(input_sentence, "\n")
   cat(input_sentence %>%
         translator(), "\n", correct_translation, "\n")
