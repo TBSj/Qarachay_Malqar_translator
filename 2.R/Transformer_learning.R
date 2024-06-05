@@ -26,10 +26,22 @@ library(reticulate)
 # token_dict = k_bert$load_vocabulary(vocab_path)
 # tokenizer = k_bert$Tokenizer(token_dict)
 
-# gpu_options = tf$compat$v1$GPUOptions(per_process_gpu_memory_fraction=0.98)
-# gpu_options = tf$compat$v1$GPUOptions(allow_growth=TRUE)
-# sess = tf$compat$v1$Session(config = tf$compat$v1$ConfigProto(gpu_options=gpu_options))
+# 
+# gpu_options = tf$compat$v1$GPUOptions(per_process_gpu_memory_fraction=0.5)
+gpu_options = tf$compat$v1$GPUOptions(allow_growth=TRUE)
+config = tf$compat$v1$ConfigProto(gpu_options=gpu_options)
+sess = tf$compat$v1$Session(config = config)
+
+tf$compat$v1$keras$backend$set_session(sess)
+
+options(tensorflow.extract.warn_negatives_pythonic = FALSE,
+        TF_GPU_ALLOCATOR="cuda_malloc_async",
+        TF_CPP_VMODULE="gpu_process_state=10,gpu_cudamallocasync_allocator=10")
+
+# gpu <- tf$config$list_physical_devices("GPU")[[1]]
+# tf$config$experimental$set_memory_growth(gpu, TRUE)
 # tf$test$is_gpu_available()
+
 # tf$device('/cpu:0')
 # PATH_TF_HUB <- 'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-4_H-256_A-4/2'
 
@@ -130,7 +142,7 @@ trg_maxlen <- lapply(trg_diglist_all, length) %>% unlist() %>% max()
 
 
 # sequence_length <- max(trg_maxlen, src_maxlen) # 152
-sequence_length <- 512 # 152
+sequence_length <- 128 # 152
 
 src_matrix_all <-
   pad_sequences(src_diglist_all, maxlen = sequence_length,  padding = "post")
@@ -651,6 +663,9 @@ transformer_all %>%
 #                                        # AdamWarmup = opt
 #                                   ))
 
+# rm(train_ds_all, val_ds_all)
+# gc()
+
 
 #    4.2. All sentences               ####
 # transformer %>%
@@ -945,8 +960,10 @@ decodeSequence <- (function(input_row) {
     decoded_row <- pad_sequences(decoded_row, maxlen = sequence_length, padding = 'post') %>% as_tensor(dtype = 'int64')
     
     next_token_predictions <-
-      transformer(list(input_row,
-                       decoded_row))
+      # transformer(list(input_row,
+      #                  decoded_row))
+      transformer$predict(list(input_row,
+                               decoded_row), verbose = FALSE)
     
     # greedy 0.02 s
     sampled_token_index <- tf$argmax(next_token_predictions[1, i, ]) %>% as.numeric()
@@ -998,8 +1015,8 @@ translator <-
 # for (i in sample.int(nrow(test_pairs_all), 3)) {
 for (i in seq(3)) {
   # c(input_sentence, correct_translation) %<-% test_pairs_all[i, ]
-  input_sentence <- test_pairs_all[i, ][[SRC_LANG]]
-  correct_translation <- test_pairs_all[i, ][[TRG_LANG]]
+  input_sentence <- test_pairs_sent[i, ][[SRC_LANG]]
+  correct_translation <- test_pairs_sent[i, ][[TRG_LANG]]
   cat(input_sentence, "\n")
   cat(input_sentence %>%
         translator(), "\n", correct_translation, "\n")
