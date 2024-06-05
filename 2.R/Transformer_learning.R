@@ -1,3 +1,5 @@
+# Firstly, train all corpus, then prepare datasets for all senteces, otherwise memory will be allocated
+
 # 1. Libraries and consts             ####
 library(keras)
 library(tensorflow)
@@ -9,7 +11,7 @@ library(this.path)
 library(tokenizers.bpe)
 library(stringr)
 library(reticulate)
-library(telegram.bot.bt)
+# library(telegram.bot.bt)
 # virtualenv_create("r-reticulate", python = install_python())
 # install_keras(envname = "r-reticulate")
 # library(tfautograph)
@@ -127,8 +129,8 @@ trg_maxlen <- lapply(trg_diglist_all, length) %>% unlist() %>% max()
 
 
 
-sequence_length <- max(trg_maxlen, src_maxlen) # 152
-# sequence_length <- 512 # 152
+# sequence_length <- max(trg_maxlen, src_maxlen) # 152
+sequence_length <- 512 # 152
 
 src_matrix_all <-
   pad_sequences(src_diglist_all, maxlen = sequence_length,  padding = "post")
@@ -535,7 +537,7 @@ layer_transformer_decoder <- new_layer_class(
 #    3.6.1. First type Transformer    ####
 
 # encoder_inputs <- layer_input(shape(NA), dtype = "int64", name = SRC_LANG)
-encoder_inputs <- layer_input(shape(NA), dtype = "float64", name = SRC_LANG)
+encoder_inputs <- layer_input(shape(NA), dtype = "float16", name = SRC_LANG)
 # Кодируем исходную последовательность
 encoder_outputs <- encoder_inputs %>%
   layer_positional_embedding(sequence_length, src_vocab_size, embed_dim) %>%
@@ -551,7 +553,7 @@ encoder_outputs <- encoder_inputs %>%
 #   layer_transformer_decoder(NULL, embed_dim, dense_dim, num_heads)
 
 # decoder_inputs <- layer_input(shape(NA), dtype = "int64", name = TRG_LANG)
-decoder_inputs <- layer_input(shape(NA), dtype = "float64", name = TRG_LANG)
+decoder_inputs <- layer_input(shape(NA), dtype = "float32", name = TRG_LANG)
 decoder_outputs <- decoder_inputs %>%
   layer_positional_embedding(sequence_length, trg_vocab_size, embed_dim) %>%
 
