@@ -74,11 +74,13 @@ df_sent <- df_all %>%
 
 str(df_all[sample(nrow(df_all), 1), ])
 
-# src_vocab_size_for_bpe    <- round(strsplit(df_all[[SRC_LANG]],    ' ') %>% unlist() %>% uniqueN() * 0.3)
-# target_vocab_size_for_bpe <- round(strsplit(df_all[[TRG_LANG]], ' ') %>% unlist() %>% uniqueN() * 0.3)
+
 
 #    2.2. BPE                         ####
 #         2.2.1. Tuning/loading bpe   ####
+# src_vocab_size_for_bpe    <- round(strsplit(df_all[[SRC_LANG]],    ' ') %>% unlist() %>% uniqueN() * 0.3)
+# target_vocab_size_for_bpe <- round(strsplit(df_all[[TRG_LANG]], ' ') %>% unlist() %>% uniqueN() * 0.3)
+# 
 # model_src_bpe <- bpe(x      = df_all[[SRC_LANG]],
 #                  coverage   = 0.999,
 #                  vocab_size = src_vocab_size_for_bpe,
