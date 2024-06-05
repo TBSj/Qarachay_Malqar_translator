@@ -284,13 +284,13 @@ buffer_size_sent <- nrow(x_train_sent)
 
 train_ds_sent <- tensor_slices_dataset(keras_array(list(src = x_train_sent, trg = y_train_sent))) %>% 
   dataset_map(format_pair) %>% 
-  dataset_shuffle(buffer_size = buffer_size) %>% 
+  dataset_shuffle(buffer_size = buffer_size_sent) %>% 
   dataset_batch(batch_size)  
 # dataset_prefetch(16)
 
 val_ds_sent <- tensor_slices_dataset(keras_array(list(src = x_valid_sent, trg = y_valid_sent))) %>% 
   dataset_map(format_pair) %>% 
-  dataset_shuffle(buffer_size = buffer_size) %>% 
+  dataset_shuffle(buffer_size = buffer_size_sent) %>% 
   dataset_batch(batch_size)  
 # dataset_prefetch(16)
 
